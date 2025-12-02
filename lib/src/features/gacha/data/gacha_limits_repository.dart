@@ -1,49 +1,30 @@
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/gacha_limits_models.dart';
 
 /// ガチャ回数管理のリポジトリ
+/// 
+/// 新しいスキーマ（gacha_daily_attempts）に対応
+/// - テーブル名: gacha_daily_attempts
+/// - RPC関数パラメータ: target_user_id
+/// - カラム: attempts（base/bonus/usedの区別なし）
 class GachaLimitsRepository {
   final SupabaseClient _supabaseService;
 
   GachaLimitsRepository(SupabaseClient supabaseService) : _supabaseService = supabaseService;
 
   /// ガチャ回数の統計情報を取得
+  /// 
+  /// 新しいスキーマ（gacha_daily_attempts）を使用
   Future<GachaAttemptsStats> getGachaAttemptsStats(String userId) async {
     try {
-      final result = await _supabaseService
-          .rpc('get_available_gacha_attempts', params: {
-            'user_id_param': userId,
-          });
-
-      if (result != null) {
-        final map = result as Map<String, dynamic>;
-        int base = (map['base_attempts'] ?? map['baseAttempts'] ?? 0) as int;
-        int bonus = (map['bonus_attempts'] ?? map['bonusAttempts'] ?? 0) as int;
-        int used = (map['used_attempts'] ?? map['usedAttempts'] ?? 0) as int;
-        int available = (map['available_attempts'] ?? map['availableAttempts']) as int? ?? (base + bonus - used);
-        final dateStr = (map['date'] as String?) ?? DateTime.now().toIso8601String();
-        final date = DateTime.tryParse(dateStr) ?? DateTime.now();
-        return GachaAttemptsStats(
-          baseAttempts: base,
-          bonusAttempts: bonus,
-          usedAttempts: used,
-          availableAttempts: available,
-          date: date,
-        );
-      }
-
-      // RPCがnullを返した場合、テーブル参照にフォールバック
+      // 新しいスキーマでは、テーブルを直接参照
       return await _getStatsFromTable(userId);
-    } catch (_) {
-      // 例外時もテーブル参照にフォールバック
+    } catch (e) {
+      // 例外時は初期化を試みてから再取得
       try {
+        await initializeDailyAttempts(userId);
         return await _getStatsFromTable(userId);
-      } catch (e) {
-        // どうしても取得できない場合は、行を作成してから再取得（安全策）
-        try {
-          await setTodayBaseAttempts(userId, 10);
-          return await _getStatsFromTable(userId);
-        } catch (_) {}
+      } catch (_) {
         return GachaAttemptsStats(
           baseAttempts: 0,
           bonusAttempts: 0,
@@ -55,50 +36,52 @@ class GachaLimitsRepository {
     }
   }
 
+  /// テーブルから統計情報を取得（新しいスキーマ対応）
   Future<GachaAttemptsStats> _getStatsFromTable(String userId) async {
     final today = _todayKeyJst3();
     final rows = await _supabaseService
-        .from('gacha_attempts')
-        .select('base_attempts, bonus_attempts, used_attempts, date')
+        .from('gacha_daily_attempts')
+        .select('date_key, attempts, updated_at')
         .eq('user_id', userId)
-        .eq('date', today)
+        .eq('date_key', today)
         .limit(1);
 
     if (rows.isNotEmpty) {
       final r = rows.first;
-      final base = (r['base_attempts'] as int?) ?? 0;
-      final bonus = (r['bonus_attempts'] as int?) ?? 0;
-      final used = (r['used_attempts'] as int?) ?? 0;
-      final date = DateTime.tryParse((r['date'] as String?) ?? today) ?? DateTime.now();
+      final attempts = (r['attempts'] as int?) ?? 0;
+      final dateKey = (r['date_key'] as String?) ?? today;
+      final date = _parseDateKey(dateKey);
+      
+      // 新しいスキーマでは attempts のみ（base/bonus/used の区別なし）
       return GachaAttemptsStats(
-        baseAttempts: base,
-        bonusAttempts: bonus,
-        usedAttempts: used,
-        availableAttempts: base + bonus - used,
+        baseAttempts: 0,
+        bonusAttempts: 0,
+        usedAttempts: 0,
+        availableAttempts: attempts,
         date: date,
       );
     }
 
-    // 行が無ければ作成してから再取得（デフォルト0回）
-    await setTodayBaseAttempts(userId, 0);
+    // 行が無ければ初期化してから再取得
+    await initializeDailyAttempts(userId);
     final retryRows = await _supabaseService
-        .from('gacha_attempts')
-        .select('base_attempts, bonus_attempts, used_attempts, date')
+        .from('gacha_daily_attempts')
+        .select('date_key, attempts, updated_at')
         .eq('user_id', userId)
-        .eq('date', today)
+        .eq('date_key', today)
         .limit(1);
 
     if (retryRows.isNotEmpty) {
       final r = retryRows.first;
-      final base = (r['base_attempts'] as int?) ?? 10;
-      final bonus = (r['bonus_attempts'] as int?) ?? 0;
-      final used = (r['used_attempts'] as int?) ?? 0;
-      final date = DateTime.tryParse((r['date'] as String?) ?? today) ?? DateTime.now();
+      final attempts = (r['attempts'] as int?) ?? 0;
+      final dateKey = (r['date_key'] as String?) ?? today;
+      final date = _parseDateKey(dateKey);
+      
       return GachaAttemptsStats(
-        baseAttempts: base,
-        bonusAttempts: bonus,
-        usedAttempts: used,
-        availableAttempts: base + bonus - used,
+        baseAttempts: 0,
+        bonusAttempts: 0,
+        usedAttempts: 0,
+        availableAttempts: attempts,
         date: date,
       );
     }
@@ -112,72 +95,64 @@ class GachaLimitsRepository {
     );
   }
 
-  /// ガチャ回数を消費
-  Future<bool> consumeGachaAttempt(String userId) async {
-    // 1) まずはRPCを試し、JSONB/booleanの両方に対応
+  /// 日次ガチャ試行回数を初期化
+  Future<void> initializeDailyAttempts(String userId) async {
     try {
+      await _supabaseService.rpc('initialize_daily_gacha_attempts_jst3', params: {
+        'target_user_id': userId,
+      });
+    } catch (e) {
+      print('initialize_daily_gacha_attempts_jst3 failed: $e');
+      rethrow;
+    }
+  }
+
+  /// date_key (YYYYMMDD) を DateTime に変換
+  DateTime _parseDateKey(String dateKey) {
+    try {
+      if (dateKey.length == 8) {
+        final year = int.parse(dateKey.substring(0, 4));
+        final month = int.parse(dateKey.substring(4, 6));
+        final day = int.parse(dateKey.substring(6, 8));
+        return DateTime(year, month, day);
+      }
+    } catch (_) {}
+    return DateTime.now();
+  }
+
+  /// ガチャ回数を消費
+  /// 
+  /// 新しいスキーマ（gacha_daily_attempts）を使用
+  Future<bool> consumeGachaAttempt(String userId) async {
+    try {
+      // RPC関数を使用（新しいスキーマ対応）
       final result = await _supabaseService
           .rpc('consume_gacha_attempt_atomic', params: {
-            'user_id_param': userId,
+            'target_user_id': userId,
           });
 
+      // RPC関数はbooleanを返す
       if (result is bool) {
         return result;
       }
+      
+      // 念のため、Map形式の場合も対応
       if (result is Map<String, dynamic>) {
-        final success = result['success'] == true;
-        return success;
+        return result['success'] == true;
       }
-    } catch (_) {
-      // RPC失敗時はフォールバックに進む
-    }
-
-    // 2) フォールバック: テーブルを直接更新（確実に1回消費）
-    try {
-      final today = _todayKeyJst3();
-
-      // 行が無ければ作成
-      await setTodayBaseAttempts(userId, 0);
-
-      // 現状を取得
-      final rows = await _supabaseService
-          .from('gacha_attempts')
-          .select('base_attempts, bonus_attempts, used_attempts')
-          .eq('user_id', userId)
-          .eq('date', today)
-          .limit(1);
-
-      if (rows.isEmpty) {
-        return false;
-      }
-
-      final r = rows.first;
-      final base = (r['base_attempts'] as int?) ?? 0;
-      final bonus = (r['bonus_attempts'] as int?) ?? 0;
-      final used = (r['used_attempts'] as int?) ?? 0;
-      final available = base + bonus - used;
-      if (available <= 0) {
-        return false;
-      }
-
-      // 1回消費
-      await _supabaseService
-          .from('gacha_attempts')
-          .update({
-            'used_attempts': used + 1,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId)
-          .eq('date', today);
-
-      return true;
+      
+      return false;
     } catch (e) {
-      print('consumeGachaAttempt fallback failed: $e');
+      print('consumeGachaAttempt failed: $e');
       return false;
     }
   }
 
   /// ガチャ結果を含めて原子的に消費＋履歴保存
+  /// 
+  /// 注意: 新しいスキーマでは、consume_gacha_attempt_atomicは
+  /// gacha_result等のパラメータを受け取らないため、
+  /// 消費後に別途履歴を記録する必要があります
   Future<bool> consumeAttemptWithResult(
     String userId,
     Map<String, dynamic> gachaResult, {
@@ -185,17 +160,23 @@ class GachaLimitsRepository {
     bool rewardSilverTicket = false,
   }) async {
     try {
-      final result = await _supabaseService.rpc('consume_gacha_attempt_atomic', params: {
-        'user_id_param': userId,
-        'gacha_result': gachaResult,
-        'reward_points': rewardPoints,
-        'reward_silver_ticket': rewardSilverTicket,
-        'source': 'ad_gacha',
-      });
-      if (result is Map && result['success'] == true) {
-        return true;
+      // 1. ガチャ回数を消費
+      final consumed = await consumeGachaAttempt(userId);
+      if (!consumed) {
+        return false;
       }
-      return false;
+
+      // 2. ガチャ履歴を記録（別途実装）
+      await recordGachaResult(
+        userId,
+        gachaResult,
+        1,
+        'ad_gacha',
+        rewardPoints: rewardPoints,
+        rewardSilverTicket: rewardSilverTicket,
+      );
+
+      return true;
     } catch (e) {
       print('consumeAttemptWithResult failed: $e');
       return false;
@@ -264,45 +245,51 @@ class GachaLimitsRepository {
   }
 
   /// 今日のガチャ回数をリセット（デバッグ用）
+  /// 
+  /// 新しいスキーマ（gacha_daily_attempts）を使用
   Future<void> resetTodayAttempts(String userId) async {
     try {
+      final todayKey = _todayKeyJst3();
       await _supabaseService
-          .from('gacha_attempts')
+          .from('gacha_daily_attempts')
           .update({
-            'used_attempts': 0,
+            'attempts': 0,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('user_id', userId)
-          .eq('date', _todayKeyJst3());
+          .eq('date_key', todayKey);
     } catch (e) {
       print('Failed to reset gacha attempts: $e');
+      rethrow;
     }
   }
 
-  /// 本日分の基本回数を設定（テスト用）
-  Future<void> setTodayBaseAttempts(String userId, int baseAttempts) async {
-    // 1) RPCは存在しない環境でもスキップして続行できるようにする
+  /// 本日分のガチャ回数を設定（テスト用）
+  /// 
+  /// 新しいスキーマ（gacha_daily_attempts）を使用
+  Future<void> setTodayBaseAttempts(String userId, int attempts) async {
     final todayKey = _todayKeyJst3();
+    
+    // 1) 初期化RPCを呼び出す
     try {
       await _supabaseService.rpc('initialize_daily_gacha_attempts_jst3', params: {
-        'user_id_param': userId,
+        'target_user_id': userId,
       });
     } catch (e) {
-      print('initialize_daily_gacha_attempts skipped: $e');
+      print('initialize_daily_gacha_attempts_jst3 failed: $e');
+      // 続行（upsertで作成される）
     }
 
-    // 2) 本日分のbase_attemptsを更新（なければupsert）
+    // 2) 本日分のattemptsを更新（なければupsert）
     try {
       await _supabaseService
-          .from('gacha_attempts')
+          .from('gacha_daily_attempts')
           .upsert({
             'user_id': userId,
-            'date': todayKey,
             'date_key': todayKey,
-            'base_attempts': baseAttempts,
-            'used_attempts': 0,
+            'attempts': attempts,
             'updated_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'user_id,date');
+          }, onConflict: 'user_id,date_key');
     } catch (e) {
       print('setTodayBaseAttempts upsert failed: $e');
       rethrow;

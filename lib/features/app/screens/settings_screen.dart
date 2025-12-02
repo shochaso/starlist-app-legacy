@@ -6,6 +6,7 @@ import '../../../src/providers/theme_provider_enhanced.dart';
 import '../../../providers/user_provider.dart';
 import '../../star/screens/star_dashboard_screen.dart';
 import '../../data_integration/screens/data_import_screen.dart';
+import '../../search/screens/search_screen.dart' show SearchScreen;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../profile/screens/profile_edit_screen.dart';
@@ -1842,15 +1843,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _navigateToSearch() {
     if (!mounted) return;
-    ref.read(selectedDrawerPageProvider.notifier).state = null;
-    ref.read(selectedTabProvider.notifier).state = 1;
-    context.go('/home');
+    ref.read(selectedDrawerPageProvider.notifier).state = 'search';
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const SearchScreen()),
+    );
   }
 
   void _navigateToMylist() {
     if (!mounted) return;
     ref.read(selectedDrawerPageProvider.notifier).state = null;
-    ref.read(selectedTabProvider.notifier).state = 3;
+    ref.read(selectedTabProvider.notifier).state = 1;
     context.go('/home');
   }
 

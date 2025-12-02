@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/gacha_limits_models.dart';
 import '../../../core/device/device_id.dart';
 
@@ -113,19 +113,18 @@ class MockAdService implements AdService {
   }
 
   Future<AdViewResult> _completeAndGrant(String userId, String adViewId, String deviceId) async {
-    final res = await _supabaseService.rpc('complete_ad_view_and_grant_ticket', params: {
-      'user_id_param': userId,
-      'ad_view_id_param': adViewId,
-      'device_id_param': deviceId,
-      'user_agent_param': null,
-    });
+    try {
+      // 新しいスキーマでは、complete_ad_view_and_grant_ticketは
+      // target_user_idのみを受け取る（広告ログは自動で作成される）
+      await _supabaseService.rpc('complete_ad_view_and_grant_ticket', params: {
+        'target_user_id': userId,
+      });
 
-    if (res is Map && res['success'] == true) {
+      // 成功時はvoidを返すため、例外がなければ成功
       return AdViewResult(success: true, rewardedAttempts: 1);
+    } catch (e) {
+      return AdViewResult(success: false, errorMessage: e.toString());
     }
-
-    final error = (res is Map && res['error'] != null) ? res['error'].toString() : 'ad_grant_failed';
-    return AdViewResult(success: false, errorMessage: error);
   }
 }
 

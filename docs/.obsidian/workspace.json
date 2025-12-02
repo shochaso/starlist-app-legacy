@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "environment_config.md",
+                "file": "development/CLAUDE.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "environment_config"
+              "title": "CLAUDE"
             }
           }
         ]
@@ -53,7 +53,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "概要",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -74,7 +74,8 @@
               "title": "ブックマーク"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -169,11 +170,27 @@
       "bases:Create new base": false
     }
   },
-  "active": "file-explorer",
+  "active": "06f0da5559f455de",
   "lastOpenFiles": [
+    "ops/CI_SEVERITY_RULES.md",
+    "ops/CI_REQUIRED_OPTIONAL_POLICY.md",
+    "docs/CHATGPT_SHARE_GUIDE.md",
+    "ops/IMPACT_ANALYSIS_REPORT.md",
+    "reports/COMPLETE_FILE_MANAGEMENT_GUIDE.md",
+    "COMPANY_SETUP_GUIDE.md",
+    "docs/COMMON_DOCS_INDEX.md",
+    "overview/COMMON_DOCS_INDEX.md",
+    "features/auth/AUTH-OAUTH-001.md",
+    "ops/AUDIT_SYSTEM_SUMMARY.md",
+    "ai/gaistudio_youtube_importer/README.md",
+    "architecture/diagrams/README.md",
+    "intake/README.md",
+    "ops/README.md",
+    "reports/2025-11-12/README.md",
+    "README.md",
+    "environment_config.md",
     "_cleanup_schedule.md",
     "docs/Mermaid.md",
-    "README.md",
     "COMMON_DOCS_INDEX.md",
     "features/day4/OPS-MONITORING-001.md",
     "ops/OPS-MONITORING-001.md",
@@ -181,31 +198,15 @@
     "journal/tasks.md",
     "journal/daily_log.md",
     "journal/bugs.md",
-    "features/auth/AUTH-OAUTH-001.md",
     "features/auth",
-    "features/design/mocup/new_registration/new_registration.md",
-    "features/design/mocup/new_registration/new_registration_architecture.md",
-    "features/design/mocup/login/login_mocup__architecture.md",
-    "features/design/mocup/login/login_mocup.md",
-    "features/design/mocup/home/home_design_mocup.md",
-    "features/design/mocup/home/home_design.md",
-    "features/design/new_registration/new_registration_architecture.md",
     "features/design/mocup/new_registration",
     "features/design/mocup/login",
     "features/design/mocup/home",
     "features/design/new_registration",
     "features/design/mocup",
-    "features/design/design.md",
     "features/design",
-    "overview/STARLIST_OVERVIEW.md",
-    "overview/COMMON_DOCS_INDEX.md",
     "journal",
     "overview",
-    "features/payment/PAY-STAR-SUBS-PER-STAR-PRICING.md",
-    "features/payment",
-    "reports/DAY4_SOT_DIFFS.md",
-    "CHATGPT_SHARE_GUIDE.md",
-    "architecture/IMPLEMENTED_FEATURES.md",
-    "architecture/starlist_technical_requirements_plan.md"
+    "features/payment"
   ]
 }

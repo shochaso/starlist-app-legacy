@@ -82,10 +82,10 @@ class SearchService {
     try {
       // ユーザー名または表示名に検索クエリが含まれるユーザーを検索
       final data = await _client
-          .from('users')
+          .from('profiles')
           .select()
-          .or('username.ilike.%${query.trim()}%,display_name.ilike.%${query.trim()}%')
-          .order('follower_count', ascending: false)
+          .or('username.ilike.%${query.trim()}%,full_name.ilike.%${query.trim()}%')
+          .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
       
       if (data.isEmpty) {
@@ -111,10 +111,10 @@ class SearchService {
   }) async {
     try {
       final data = await _client
-          .from('users')
+          .from('profiles')
           .select()
-          .eq('is_star_creator', true)
-          .order('follower_count', ascending: false)
+          .eq('role', 'star')
+          .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
       
       if (data.isEmpty) {

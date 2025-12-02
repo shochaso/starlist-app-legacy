@@ -24,6 +24,7 @@
     "docs:diff-log": "node scripts/docs/generate-diff-log.mjs",
     "docs:preflight": "npm run docs:update-dates && npm run lint:md:local && npm run docs:diff-log",
     "linear:create-issue": "ts-node scripts/linear/create_linear_issue.ts",
+    "linear:complete-issue": "ts-node scripts/linear/complete_linear_issue.ts",
     "security:runner": "bash scripts/extended_security_runner.sh",
     "security:install:brew": "brew install gitleaks trivy || true",
     "security:install:pipx": "pipx install semgrep || pip install semgrep || true",

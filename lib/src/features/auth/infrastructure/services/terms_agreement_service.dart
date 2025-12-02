@@ -29,7 +29,7 @@ class TermsAgreementService {
 
       // ユーザーの認証ステータスを更新
       await _supabase
-          .from('users')
+          .from('profiles')
           .update({
             'verification_status_final': 'awaiting_ekyc',
             'agency_terms_agreed': true,

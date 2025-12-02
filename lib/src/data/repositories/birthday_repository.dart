@@ -17,7 +17,7 @@ class BirthdayRepository {
     bool notificationEnabled,
   ) async {
     try {
-      await _supabase.from('users').update({
+      await _supabase.from('profiles').update({
         'birthday': birthday?.toIso8601String().split('T')[0],
         'birthday_visibility': _birthdayVisibilityToString(visibility),
         'birthday_notification_enabled': notificationEnabled,

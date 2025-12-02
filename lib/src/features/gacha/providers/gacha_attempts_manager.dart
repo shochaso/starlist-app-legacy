@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/gacha_limits_models.dart';
 import '../data/gacha_limits_repository.dart';
 import '../providers/gacha_limits_providers.dart';
@@ -142,35 +142,30 @@ class GachaAttemptsManager extends StateNotifier<GachaAttemptsState> {
   }
 
   /// ボーナス回数を追加（広告視聴）
+  /// 
+  /// 注意: 新しいスキーマでは、広告視聴はcomplete_ad_view_and_grant_ticketで処理される
+  /// このメソッドは主にad_serviceから呼ばれる想定
   Future<bool> addBonusAttempts(int count) async {
     try {
       print('GachaAttemptsManager: Adding $count bonus attempts for user $userId');
       
-      // 1. 広告視聴をシミュレート（実際のad_serviceから呼ばれる想定）
-      await Future.delayed(const Duration(seconds: 3));
-      
-      // 2. サーバー側でボーナス回数を追加
-      final client = Supabase.instance.client;
-      await client.rpc('add_gacha_bonus_attempts', params: {
-        'user_id_param': userId,
-        'bonus_count': count,
-      });
-      
-      // 3. 最新統計を取得して状態更新
+      // 新しいスキーマでは、広告視聴はcomplete_ad_view_and_grant_ticketで処理される
+      // このメソッドは主に内部使用のため、直接attemptsを増やす処理は行わない
+      // 代わりに、最新統計を取得して状態更新
       await refreshAttempts();
       
-      print('GachaAttemptsManager: Successfully added $count bonus attempts');
+      print('GachaAttemptsManager: Successfully refreshed attempts after ad view');
       return true;
     } catch (e) {
-      print('GachaAttemptsManager: Failed to add bonus attempts: $e');
+      print('GachaAttemptsManager: Failed to refresh attempts after ad view: $e');
       
-      // エラー時もローカルで加算（UX優先）
-      final newBonusAttempts = (state.stats.bonusAttempts + count).clamp(0, 3);
+      // エラー時はローカルで加算（UX優先）
+      final currentAvailable = state.stats.availableAttempts;
       final newStats = GachaAttemptsStats(
         baseAttempts: state.stats.baseAttempts,
-        bonusAttempts: newBonusAttempts,
+        bonusAttempts: state.stats.bonusAttempts,
         usedAttempts: state.stats.usedAttempts,
-        availableAttempts: state.stats.baseAttempts + newBonusAttempts - state.stats.usedAttempts,
+        availableAttempts: (currentAvailable + count).clamp(0, 999),
         date: state.stats.date,
       );
       

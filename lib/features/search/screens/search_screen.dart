@@ -1938,7 +1938,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen>
   void _navigateToMylist() {
     if (!mounted) return;
     ref.read(selectedDrawerPageProvider.notifier).state = null;
-    ref.read(selectedTabProvider.notifier).state = 3;
+    ref.read(selectedTabProvider.notifier).state = 1;
     context.go('/home');
   }
 

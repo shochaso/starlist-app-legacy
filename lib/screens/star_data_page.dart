@@ -7,6 +7,7 @@ import 'package:starlist_app/services/image_url_builder.dart';
 
 import '../widgets/media_gate.dart';
 import '../utils/visibility_rules.dart';
+import '../src/features/star_data/presentation/star_data_paywall_dialog.dart';
 
 const bool kUsePixelationMask = false;
 
@@ -373,12 +374,15 @@ class _PostHeader extends StatelessWidget {
               children: [
                 Text(post.postTitle,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('${_fmt(post.date)} ${post.time} • ${post.totalItems}件',
+                Text('${post.totalItems}件',
                     style:
                         const TextStyle(fontSize: 11, color: Colors.black54)),
               ],
             ),
           ),
+          Text('${_fmt(post.date)} ${post.time}',
+              style: const TextStyle(fontSize: 11, color: Colors.black54)),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -386,6 +390,20 @@ class _PostHeader extends StatelessWidget {
             child: Text(badge.text,
                 style: const TextStyle(color: Colors.white, fontSize: 11)),
           ),
+          const SizedBox(width: 8),
+          if (post.category == 'youtube') ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                  color: const Color(0xFFFF0000), // YouTube Red
+                  borderRadius: BorderRadius.circular(999)),
+              child: const Text('YouTube',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ],
         ],
       ),
     );
@@ -637,7 +655,12 @@ class _TeaserBanner extends StatelessWidget {
           ]),
         ),
         FilledButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => const PaywallPlansDialog(),
+              );
+            },
             icon: const Icon(Icons.lock),
             label: const Text('アップグレード')),
       ]),
@@ -700,7 +723,17 @@ class _ActionBar extends StatelessWidget {
         const Spacer(),
         if (ctaLabel != null)
           FilledButton(
-              onPressed: () {},
+              onPressed: () {
+                if (!ctaLabel!.contains('もっと見る') && !ctaLabel!.contains('詳細')) {
+                  // 通常の遷移
+                } else {
+                  // Paywall
+                  showDialog(
+                    context: context,
+                    builder: (_) => const PaywallPlansDialog(),
+                  );
+                }
+              },
               child: Text(ctaLabel!, style: const TextStyle(fontSize: 12))),
       ]),
     );
@@ -736,8 +769,8 @@ class _HatchPainter extends CustomPainter {
 String _fmt(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 IconData _catIcon(String c) => switch (c) {
-      'youtube' => Icons.ondemand_video,
-      'music' => Icons.music_note,
+      'youtube' => Icons.play_circle_filled, // Changed to resemble YouTube play button more
+      'music' => Icons.music_note, // Explicitly music note
       'shopping' => Icons.shopping_bag,
       'books' => Icons.menu_book,
       'apps' => Icons.smartphone,

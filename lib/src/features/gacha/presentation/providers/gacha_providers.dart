@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/gacha_repository.dart';
+import '../../data/gacha_repository_impl.dart';
 import '../../domain/draw_gacha_usecase.dart';
 import '../../models/gacha_models_simple.dart';
 import '../../services/gacha_sound_service.dart';

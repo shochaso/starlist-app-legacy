@@ -8,7 +8,7 @@ import 'service_icon_cache.dart';
 import 'service_icon_registry.dart' as registry;
 import 'service_icon_sources.dart' show ServiceIconResolution;
 
-class ServiceIcon extends StatelessWidget {
+class ServiceIcon extends StatefulWidget {
   const ServiceIcon.forKey(
     this._keyName, {
     super.key,
@@ -34,20 +34,57 @@ class ServiceIcon extends StatelessWidget {
   bool get _shouldHideImportImages => kHideImportImages && _keyName != null;
 
   @override
+  State<ServiceIcon> createState() => _ServiceIconState();
+}
+
+class _ServiceIconState extends State<ServiceIcon> {
+  Future<ServiceIconResolution?>? _resolutionFuture;
+  String? _normalizedKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareResolutionFuture();
+  }
+
+  @override
+  void didUpdateWidget(covariant ServiceIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget._keyName != oldWidget._keyName) {
+      _prepareResolutionFuture();
+    }
+  }
+
+  void _prepareResolutionFuture() {
+    if (widget._keyName == null) {
+      _resolutionFuture = null;
+      _normalizedKey = null;
+      return;
+    }
+    final requestedKey = widget._keyName!;
+    _normalizedKey = KeyNormalizer.normalize(requestedKey);
+    _resolutionFuture =
+        registry.ServiceIconRegistry.instance.resolve(requestedKey);
+  }
+
+  bool get _shouldHideImportImages =>
+      widget._shouldHideImportImages && widget._keyName != null;
+
+  @override
   Widget build(BuildContext context) {
     if (_shouldHideImportImages) {
-      return SizedBox.square(dimension: size);
+      return SizedBox.square(dimension: widget.size);
     }
-    if (assetPath != null) {
-      return _buildAssetIcon(assetPath!);
+    if (widget.assetPath != null) {
+      return _buildAssetIcon(widget.assetPath!);
     }
     return _buildDynamicIcon();
   }
 
   Widget _buildDynamicIcon() {
-    final requestedKey = _keyName!;
-    final normalized = KeyNormalizer.normalize(requestedKey);
-    final future = registry.ServiceIconRegistry.instance.resolve(requestedKey);
+    final requestedKey = widget._keyName!;
+    final normalized = _normalizedKey ?? KeyNormalizer.normalize(requestedKey);
+    final future = _resolutionFuture;
 
     return FutureBuilder<ServiceIconResolution?>(
       future: future,
@@ -60,7 +97,7 @@ class ServiceIcon extends StatelessWidget {
           recordIconDiag(
             IconDiagEvent(
               key: normalized,
-              origin: 'error:${snapshot.error}',
+              origin: normalized,
               source: ServiceIconSourceType.fallback,
               duration: Duration.zero,
               fallback: true,
@@ -106,18 +143,18 @@ class ServiceIcon extends StatelessWidget {
             payload.isSvg
                 ? SvgPicture.memory(
                     payload.bytes,
-                    width: size,
-                    height: size,
-                    fit: fit,
+                    width: widget.size,
+                    height: widget.size,
+                    fit: widget.fit,
                     colorFilter: null,
                     clipBehavior: Clip.antiAlias,
                     placeholderBuilder: (_) => _buildPlaceholder(),
                   )
                 : Image.memory(
                     payload.bytes,
-                    width: size,
-                    height: size,
-                    fit: fit,
+                    width: widget.size,
+                    height: widget.size,
+                    fit: widget.fit,
                     filterQuality: FilterQuality.high,
                   ),
           );
@@ -144,22 +181,22 @@ class ServiceIcon extends StatelessWidget {
   Widget _buildAssetIcon(String path) {
     final isSvg = path.toLowerCase().endsWith('.svg');
     final normalized =
-        _keyName != null ? KeyNormalizer.normalize(_keyName) : path;
+        widget._keyName != null ? KeyNormalizer.normalize(widget._keyName!) : path;
 
     try {
-      final widget = isSvg
+      final iconWidget = isSvg
           ? SvgPicture.asset(
               path,
-              width: size,
-              height: size,
-              fit: fit,
+              width: widget.size,
+              height: widget.size,
+              fit: widget.fit,
               clipBehavior: Clip.antiAlias,
             )
           : Image.asset(
               path,
-              width: size,
-              height: size,
-              fit: fit,
+              width: widget.size,
+              height: widget.size,
+              fit: widget.fit,
               filterQuality: FilterQuality.high,
             );
       recordIconDiag(
@@ -172,7 +209,7 @@ class ServiceIcon extends StatelessWidget {
           duration: Duration.zero,
         ),
       );
-      return _buildAnimated(widget);
+      return _buildAnimated(iconWidget);
     } catch (_) {
       recordIconDiag(
         IconDiagEvent(
@@ -189,7 +226,7 @@ class ServiceIcon extends StatelessWidget {
 
   Widget _buildAnimated(Widget child) {
     return SizedBox.square(
-      dimension: size,
+      dimension: widget.size,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
         duration: const Duration(milliseconds: 200),
@@ -201,21 +238,21 @@ class ServiceIcon extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return SizedBox.square(
-      dimension: size,
+      dimension: widget.size,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Colors.grey.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(size * 0.2),
+          borderRadius: BorderRadius.circular(widget.size * 0.2),
         ),
       ),
     );
   }
 
   Widget _buildFallbackIcon() {
-    final icon = fallback ?? Icons.image_not_supported_outlined;
+    final icon = widget.fallback ?? Icons.image_not_supported_outlined;
     return SizedBox.square(
-      dimension: size,
-      child: Icon(icon, size: size * 0.7),
+      dimension: widget.size,
+      child: Icon(icon, size: widget.size * 0.7),
     );
   }
 }

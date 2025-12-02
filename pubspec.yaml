@@ -62,3 +62,4 @@ flutter:
     - assets/icons/services/
 
     - assets/icons/services/
+    - assets/mocks/star_data/

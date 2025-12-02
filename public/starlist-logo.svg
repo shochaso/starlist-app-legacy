@@ -1,0 +1,13 @@
+<svg width="320" height="80" viewBox="0 0 320 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e1a3d" />
+      <stop offset="100%" stop-color="#1f5dc0" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="80" rx="20" fill="url(#bg)" />
+  <text x="26" y="50" font-family="Inter, sans-serif" font-size="34" font-weight="600" fill="#ffda44">STAR</text>
+  <text x="166" y="50" font-family="Inter, sans-serif" font-size="34" font-weight="600" fill="#ffffff">LIST</text>
+  <circle cx="280" cy="24" r="8" fill="#ffda44" />
+  <circle cx="300" cy="24" r="5" fill="#ffffff" />
+</svg>

@@ -5,41 +5,56 @@ import 'tokens.dart';
 class AppTheme {
   static const Color primaryColor = AppColors.brand;
 
-  static ThemeData get lightTheme => buildTheme();
-  static ThemeData get darkTheme => buildTheme(); // TODO: ダークテーマを実装
+  static ThemeData get lightTheme => buildTheme(isDark: false);
+  static ThemeData get darkTheme => buildTheme(isDark: true);
 }
 
-ThemeData buildTheme() {
-  final base = ThemeData(useMaterial3: true);
+ThemeData buildTheme({bool isDark = false}) {
+  final base = ThemeData(
+    useMaterial3: true,
+    brightness: isDark ? Brightness.dark : Brightness.light,
+  );
   const tokens = AppTokens.defaultTokens;
   final textTheme = GoogleFonts.notoSansJpTextTheme(base.textTheme);
 
+  // ダークテーマ用の色定義
+  final bgColor = isDark ? const Color(0xFF1A1A1A) : AppColors.bg;
+  final cardColor = isDark ? const Color(0xFF2A2A2A) : AppColors.card;
+  final textColor = isDark ? const Color(0xFFE0E0E0) : AppColors.text;
+  final borderColor = isDark ? const Color(0xFF404040) : AppColors.border;
+  final primaryColor = isDark ? const Color(0xFF4ECDC4) : AppColors.brand;
+
   return base.copyWith(
-    scaffoldBackgroundColor: AppColors.bg,
+    scaffoldBackgroundColor: bgColor,
     colorScheme: base.colorScheme.copyWith(
-      primary: AppColors.brand,
-      onPrimary: Colors.white,
-      surface: AppColors.card,
-      onSurface: AppColors.text,
+      brightness: isDark ? Brightness.dark : Brightness.light,
+      primary: primaryColor,
+      onPrimary: isDark ? Colors.black : Colors.white,
+      surface: cardColor,
+      onSurface: textColor,
+      background: bgColor,
+      onBackground: textColor,
     ),
     textTheme: textTheme.apply(
-      bodyColor: AppColors.text,
-      displayColor: AppColors.text,
+      bodyColor: textColor,
+      displayColor: textColor,
     ),
     cardTheme: CardThemeData(
-      color: AppColors.card,
+      color: cardColor,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: tokens.radius.lgRadius,
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: borderColor),
       ),
       margin: EdgeInsets.all(tokens.spacing.md),
     ),
     inputDecorationTheme: InputDecorationTheme(
-      border: const OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.border)),
-      focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.brand)),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(color: borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: primaryColor),
+      ),
       contentPadding: EdgeInsets.all(tokens.spacing.md),
     ),
     extensions: const [AppTokens.defaultTokens],

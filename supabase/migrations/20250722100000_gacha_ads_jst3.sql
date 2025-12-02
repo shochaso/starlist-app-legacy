@@ -1,206 +1,118 @@
--- Gacha/Ads JST3 daily key and hard cap (Lv1 + Lv2-lite)
--- - Introduces date_key (JST 3:00 reset) to ad_views / gacha_attempts / gacha_history
--- - Adds device_id/user_agent/client_ip/status/error_reason/reward_granted to ad_views
--- - Adds reward_points/reward_silver_ticket to gacha_history
--- - Adds helper function get_jst3_date_key()
--- - Adds RPCs: complete_ad_view_and_grant_ticket, consume_gacha_attempt_atomic
+-- ============================================================
+-- GACHA / ADS JST3 - Final MVP Schema
+-- ============================================================
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- ----------------------------------------
+-- 1. ad_views（広告視聴ログ）
+-- ----------------------------------------
+CREATE TABLE IF NOT EXISTS ad_views (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles (id) ON DELETE CASCADE,
+  viewed_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT ad_views_unique_per_minute UNIQUE (user_id, viewed_at)
+);
 
--- JST 3:00 reset date key helper
-CREATE OR REPLACE FUNCTION public.get_jst3_date_key(ts timestamptz DEFAULT now())
-RETURNS date AS $$
-  SELECT (timezone('Asia/Tokyo', ts) - interval '3 hour')::date;
-$$ LANGUAGE sql STABLE;
+-- インデックス
+CREATE INDEX IF NOT EXISTS ad_views_user_id_idx ON ad_views (user_id);
+CREATE INDEX IF NOT EXISTS ad_views_viewed_at_idx ON ad_views (viewed_at);
 
--- ad_views extensions
-ALTER TABLE IF EXISTS public.ad_views
-  ADD COLUMN IF NOT EXISTS device_id text,
-  ADD COLUMN IF NOT EXISTS user_agent text,
-  ADD COLUMN IF NOT EXISTS client_ip inet,
-  ADD COLUMN IF NOT EXISTS status text DEFAULT 'initiated' CHECK (status IN ('initiated','completed','failed','skipped')),
-  ADD COLUMN IF NOT EXISTS error_reason text,
-  ADD COLUMN IF NOT EXISTS reward_granted boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS date_key date;
+-- ----------------------------------------
+-- 2. gacha_daily_attempts（1日あたりのガチャ回数）
+-- JST+3 = "日本時間の一日区切り"
+-- ----------------------------------------
+CREATE TABLE IF NOT EXISTS gacha_daily_attempts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles (id) ON DELETE CASCADE,
+  date_key char(8) NOT NULL,
+  attempts int NOT NULL DEFAULT 0,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, date_key)
+);
 
--- Backfill date_key for existing rows
-UPDATE public.ad_views SET date_key = public.get_jst3_date_key(viewed_at) WHERE date_key IS NULL;
+CREATE INDEX IF NOT EXISTS gacha_attempts_user_id_idx ON gacha_daily_attempts (user_id);
+CREATE INDEX IF NOT EXISTS gacha_attempts_date_key_idx ON gacha_daily_attempts (date_key);
 
--- gacha_attempts add date_key (for consistency & indexing)
-ALTER TABLE IF EXISTS public.gacha_attempts
-  ADD COLUMN IF NOT EXISTS date_key date;
-UPDATE public.gacha_attempts SET date_key = public.get_jst3_date_key(created_at) WHERE date_key IS NULL;
+-- ----------------------------------------
+-- 3. RPC: get_jst3_date_key（日本時間の0時区切り）
+-- ----------------------------------------
+CREATE OR REPLACE FUNCTION get_jst3_date_key()
+RETURNS char(8)
+LANGUAGE sql STABLE
+AS $$
+  SELECT to_char((now() AT TIME ZONE 'Asia/Tokyo'), 'YYYYMMDD')::char(8);
+$$;
 
--- gacha_history enrichments
-ALTER TABLE IF EXISTS public.gacha_history
-  ADD COLUMN IF NOT EXISTS reward_points integer,
-  ADD COLUMN IF NOT EXISTS reward_silver_ticket boolean DEFAULT false,
-  ADD COLUMN IF NOT EXISTS date_key date;
-UPDATE public.gacha_history SET date_key = public.get_jst3_date_key(created_at) WHERE date_key IS NULL;
-
--- Indexes for daily caps
-CREATE INDEX IF NOT EXISTS idx_ad_views_user_date ON public.ad_views(user_id, date_key);
-CREATE INDEX IF NOT EXISTS idx_ad_views_device_date ON public.ad_views(device_id, date_key);
-CREATE INDEX IF NOT EXISTS idx_gacha_attempts_user_date ON public.gacha_attempts(user_id, date_key);
-CREATE INDEX IF NOT EXISTS idx_gacha_history_user_date ON public.gacha_history(user_id, date_key);
-
--- Initialize or upsert daily gacha attempts (base=0 by default)
-CREATE OR REPLACE FUNCTION public.initialize_daily_gacha_attempts_jst3(user_id_param uuid)
-RETURNS void AS $$
+-- ----------------------------------------
+-- 4. RPC: initialize_daily_gacha_attempts_jst3
+-- ----------------------------------------
+CREATE OR REPLACE FUNCTION initialize_daily_gacha_attempts_jst3(target_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
 DECLARE
-  today_key date := public.get_jst3_date_key();
+  d char(8);
 BEGIN
-  INSERT INTO public.gacha_attempts (user_id, date, date_key, base_attempts)
-  VALUES (user_id_param, today_key, today_key, 0)
-  ON CONFLICT (user_id, date) DO NOTHING;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+  d := get_jst3_date_key();
 
--- Override: get_available_gacha_attempts to use JST3
-CREATE OR REPLACE FUNCTION public.get_available_gacha_attempts(user_id_param uuid)
-RETURNS jsonb AS $$
-DECLARE
-  today_key date := public.get_jst3_date_key();
-  rec record;
-BEGIN
-  PERFORM public.initialize_daily_gacha_attempts_jst3(user_id_param);
-  SELECT * INTO rec FROM public.gacha_attempts WHERE user_id = user_id_param AND date = today_key;
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object(
-      'base_attempts', 0,
-      'bonus_attempts', 0,
-      'used_attempts', 0,
-      'available_attempts', 0,
-      'date', today_key
-    );
-  END IF;
-
-  RETURN jsonb_build_object(
-    'base_attempts', rec.base_attempts,
-    'bonus_attempts', rec.bonus_attempts,
-    'used_attempts', rec.used_attempts,
-    'available_attempts', rec.base_attempts + rec.bonus_attempts - rec.used_attempts,
-    'date', rec.date
+  INSERT INTO gacha_daily_attempts (user_id, date_key, attempts)
+  SELECT target_user_id, d, 0
+  WHERE NOT EXISTS (
+    SELECT 1 FROM gacha_daily_attempts
+    WHERE user_id = target_user_id AND date_key = d
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- Compatibility wrapper: consume_gacha_attempt delegates to atomic version without history payload
-CREATE OR REPLACE FUNCTION public.consume_gacha_attempt(user_id_param uuid)
-RETURNS jsonb AS $$
-BEGIN
-  RETURN public.consume_gacha_attempt_atomic(user_id_param, NULL, NULL, false, 'normal');
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Complete ad view and (if under cap) grant +1 gacha attempt
-CREATE OR REPLACE FUNCTION public.complete_ad_view_and_grant_ticket(
-  user_id_param uuid,
-  ad_view_id_param uuid,
-  device_id_param text DEFAULT NULL,
-  user_agent_param text DEFAULT NULL
-)
-RETURNS jsonb AS $$
+-- ----------------------------------------
+-- 5. RPC: complete_ad_view_and_grant_ticket
+-- （広告視聴 → ログ追加 → ガチャ回数+1）
+-- ----------------------------------------
+CREATE OR REPLACE FUNCTION complete_ad_view_and_grant_ticket(target_user_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
 DECLARE
-  today_key date := public.get_jst3_date_key();
-  max_daily integer := 3;
-  current_count integer;
-  ad_record record;
+  d char(8);
 BEGIN
-  -- lock ad view row
-  SELECT * INTO ad_record FROM public.ad_views WHERE id = ad_view_id_param FOR UPDATE;
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('success', false, 'error', 'ad_view_not_found');
-  END IF;
+  d := get_jst3_date_key();
 
-  -- idempotent: already completed & granted
-  IF ad_record.status = 'completed' AND ad_record.reward_granted THEN
-    RETURN jsonb_build_object('success', true, 'granted', false, 'message', 'already_granted');
-  END IF;
+  -- 広告ログ
+  INSERT INTO ad_views (user_id) VALUES (target_user_id);
 
-  -- ensure date_key
-  UPDATE public.ad_views
-    SET date_key = COALESCE(ad_record.date_key, today_key),
-        device_id = COALESCE(ad_record.device_id, device_id_param),
-        user_agent = COALESCE(ad_record.user_agent, user_agent_param),
-        client_ip = COALESCE(ad_record.client_ip, inet_client_addr())
-    WHERE id = ad_view_id_param;
+  -- 日次初期化
+  PERFORM initialize_daily_gacha_attempts_jst3(target_user_id);
 
-  -- daily count (user based)
-  SELECT count(*) INTO current_count
-    FROM public.ad_views
-    WHERE user_id = user_id_param AND date_key = today_key AND reward_granted = true;
-
-  IF current_count >= max_daily THEN
-    UPDATE public.ad_views
-      SET status = 'completed', reward_granted = false, error_reason = 'daily_cap_reached', date_key = today_key
-      WHERE id = ad_view_id_param;
-    RETURN jsonb_build_object('success', false, 'error', 'daily_cap_reached');
-  END IF;
-
-  -- increment bonus attempts
-  PERFORM public.initialize_daily_gacha_attempts_jst3(user_id_param);
-
-  UPDATE public.gacha_attempts
-    SET bonus_attempts = bonus_attempts + 1,
-        date = today_key,
-        date_key = today_key,
-        updated_at = now()
-    WHERE user_id = user_id_param AND date = today_key;
-
-  UPDATE public.ad_views
-    SET status = 'completed', reward_granted = true, date_key = today_key
-    WHERE id = ad_view_id_param;
-
-  RETURN jsonb_build_object('success', true, 'granted', true, 'remaining_today', max_daily - current_count - 1);
+  -- ガチャ回数+1
+  UPDATE gacha_daily_attempts
+  SET attempts = attempts + 1,
+      updated_at = now()
+  WHERE user_id = target_user_id
+    AND date_key = d;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- Atomic consume gacha attempt and record history
-CREATE OR REPLACE FUNCTION public.consume_gacha_attempt_atomic(
-  user_id_param uuid,
-  gacha_result jsonb DEFAULT NULL,
-  reward_points integer DEFAULT NULL,
-  reward_silver_ticket boolean DEFAULT false,
-  source text DEFAULT 'normal'
-)
-RETURNS jsonb AS $$
+-- ----------------------------------------
+-- 6. RPC: consume_gacha_attempt_atomic
+-- （ガチャを引く → 回数-1）
+-- ----------------------------------------
+CREATE OR REPLACE FUNCTION consume_gacha_attempt_atomic(target_user_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
 DECLARE
-  today_key date := public.get_jst3_date_key();
-  attempts_record record;
-  available integer;
+  d char(8);
+  ok boolean := false;
 BEGIN
-  PERFORM public.initialize_daily_gacha_attempts_jst3(user_id_param);
+  d := get_jst3_date_key();
 
-  SELECT * INTO attempts_record
-    FROM public.gacha_attempts
-    WHERE user_id = user_id_param AND date = today_key
-    FOR UPDATE;
+  UPDATE gacha_daily_attempts
+  SET attempts = attempts - 1,
+      updated_at = now()
+  WHERE user_id = target_user_id
+    AND date_key = d
+    AND attempts > 0
+  RETURNING true INTO ok;
 
-  available := attempts_record.base_attempts + attempts_record.bonus_attempts - attempts_record.used_attempts;
-  IF available <= 0 THEN
-    RETURN jsonb_build_object('success', false, 'error', 'no_attempts');
-  END IF;
-
-  UPDATE public.gacha_attempts
-    SET used_attempts = attempts_record.used_attempts + 1,
-        updated_at = now(),
-        date_key = today_key,
-        date = today_key
-    WHERE id = attempts_record.id;
-
-  IF gacha_result IS NOT NULL THEN
-    INSERT INTO public.gacha_history (user_id, gacha_result, attempts_used, source, reward_points, reward_silver_ticket, date_key, created_at)
-    VALUES (user_id_param, gacha_result, 1, source, reward_points, reward_silver_ticket, today_key, now());
-  END IF;
-
-  RETURN jsonb_build_object('success', true, 'remaining', available - 1);
+  RETURN ok;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Helper view: count granted today per user/device
-CREATE OR REPLACE VIEW public.ad_view_grants_today AS
-SELECT user_id, device_id, date_key, count(*) AS grants
-FROM public.ad_views
-WHERE reward_granted = true AND date_key = public.get_jst3_date_key()
-GROUP BY user_id, device_id, date_key;
+$$;

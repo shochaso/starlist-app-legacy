@@ -1,0 +1,35 @@
+{
+  "packId": "hanayama-mizuki::2025-10-07",
+  "createdAt": "2025-10-07T12:20:00Z",
+  "items": [
+    {
+      "id": "mock-item-001",
+      "username": "hanayama-mizuki",
+      "date": "2025-10-07T08:42:00Z",
+      "category": "youtube",
+      "genre": "video_variety",
+      "title": "深夜テンションで雑談しながらリラックス",
+      "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-1.jpg",
+      "metadata": {
+        "source": "YouTube",
+        "duration": "12:03",
+        "thumbnail_url": "https://cdn.starlist.jp/mock/yt-1.jpg"
+      }
+    },
+    {
+      "id": "mock-item-002",
+      "username": "hanayama-mizuki",
+      "date": "2025-10-07T12:20:00Z",
+      "category": "youtube",
+      "genre": "video_gameplay",
+      "title": "APEXシーズンでソロマスターへの道",
+      "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-2.jpg",
+      "metadata": {
+        "source": "YouTube",
+        "duration": "22:14",
+        "match": "solo queue",
+        "thumbnail_url": "https://cdn.starlist.jp/mock/yt-2.jpg"
+      }
+    }
+  ]
+}

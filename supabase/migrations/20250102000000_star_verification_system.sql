@@ -25,20 +25,50 @@ BEGIN
     END IF;
 END $$;
 
--- 2. ユーザーテーブルの拡張
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status verification_status_type DEFAULT 'pending';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS is_minor BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS ekyc_provider VARCHAR(50);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS ekyc_verification_id VARCHAR(255);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS ekyc_verified_at TIMESTAMP WITH TIME ZONE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS legal_name VARCHAR(255);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_notes TEXT;
+-- 2. プロフィールテーブルの拡張（usersはビューなので、profilesテーブルに追加）
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_status verification_status_type DEFAULT 'pending';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_minor BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ekyc_provider VARCHAR(50);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ekyc_verification_id VARCHAR(255);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS ekyc_verified_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS legal_name VARCHAR(255);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_notes TEXT;
+
+-- usersビューを更新して新しいカラムを含める（既存の列順序を維持）
+DROP VIEW IF EXISTS public.users;
+CREATE VIEW public.users AS
+SELECT 
+  id,
+  username,
+  full_name,
+  avatar_url,
+  bio,
+  website,
+  location,
+  email,
+  phone,
+  role,
+  status,
+  is_verified,
+  verification_badges,
+  last_login_at,
+  verification_status,
+  birth_date,
+  is_minor,
+  ekyc_provider,
+  ekyc_verification_id,
+  ekyc_verified_at,
+  legal_name,
+  verification_notes,
+  created_at,
+  updated_at
+FROM public.profiles;
 
 -- 3. 親権者同意テーブル
 CREATE TABLE IF NOT EXISTS parental_consents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     parent_full_name VARCHAR(255) NOT NULL,
     parent_email VARCHAR(255),
     parent_phone VARCHAR(50),
@@ -59,7 +89,7 @@ CREATE TABLE IF NOT EXISTS parental_consents (
 -- 4. eKYC認証ログテーブル
 CREATE TABLE IF NOT EXISTS ekyc_verifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     parental_consent_id UUID REFERENCES parental_consents(id) ON DELETE CASCADE,
     verification_type VARCHAR(50) NOT NULL, -- 'user' or 'parent'
     provider VARCHAR(50) NOT NULL, -- 'trustdock', 'liquid', etc.
@@ -85,7 +115,7 @@ CREATE TABLE IF NOT EXISTS ekyc_verifications (
 -- 5. SNS連携・認証テーブル
 CREATE TABLE IF NOT EXISTS sns_verifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     platform VARCHAR(50) NOT NULL, -- 'youtube', 'instagram', 'tiktok', 'twitter'
     account_handle VARCHAR(255) NOT NULL, -- @username
     account_url TEXT NOT NULL,
@@ -107,8 +137,8 @@ CREATE TABLE IF NOT EXISTS sns_verifications (
 -- 6. 管理者審査ログテーブル
 CREATE TABLE IF NOT EXISTS admin_review_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    admin_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    admin_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     review_type VARCHAR(50) NOT NULL, -- 'initial_review', 'parental_consent_review', 'appeal_review'
     previous_status verification_status_type,
     new_status verification_status_type NOT NULL,
@@ -119,8 +149,8 @@ CREATE TABLE IF NOT EXISTS admin_review_logs (
 );
 
 -- 7. インデックス作成
-CREATE INDEX IF NOT EXISTS idx_users_verification_status ON users(verification_status);
-CREATE INDEX IF NOT EXISTS idx_users_is_minor ON users(is_minor);
+CREATE INDEX IF NOT EXISTS idx_profiles_verification_status ON public.profiles(verification_status);
+CREATE INDEX IF NOT EXISTS idx_profiles_is_minor ON public.profiles(is_minor);
 CREATE INDEX IF NOT EXISTS idx_parental_consents_user_id ON parental_consents(user_id);
 CREATE INDEX IF NOT EXISTS idx_parental_consents_status ON parental_consents(verification_status);
 CREATE INDEX IF NOT EXISTS idx_ekyc_verifications_user_id ON ekyc_verifications(user_id);
@@ -140,9 +170,9 @@ CREATE POLICY "ユーザーは自分の親権者同意情報を管理可能" ON 
 CREATE POLICY "管理者は全ての親権者同意情報を閲覧可能" ON parental_consents
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -162,9 +192,9 @@ CREATE POLICY "ユーザーは自分のeKYC情報を閲覧可能" ON ekyc_verifi
 CREATE POLICY "管理者は全てのeKYC情報を閲覧可能" ON ekyc_verifications
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -180,9 +210,9 @@ ALTER TABLE admin_review_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "管理者のみ審査ログを閲覧可能" ON admin_review_logs
   FOR ALL USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -205,10 +235,10 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- トリガー作成
-DROP TRIGGER IF EXISTS trigger_update_minor_status ON users;
+DROP TRIGGER IF EXISTS trigger_update_minor_status ON public.profiles;
 CREATE TRIGGER trigger_update_minor_status
     BEFORE INSERT OR UPDATE OF birth_date
-    ON users
+    ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_minor_status();
 
@@ -221,7 +251,7 @@ DECLARE
     v_has_sns_verification BOOLEAN := FALSE;
 BEGIN
     -- ユーザー情報取得
-    SELECT * INTO v_user FROM users WHERE id = p_user_id;
+    SELECT * INTO v_user FROM public.profiles WHERE id = p_user_id;
     
     IF NOT FOUND THEN
         RETURN 'pending';

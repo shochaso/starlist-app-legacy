@@ -25,20 +25,58 @@ BEGIN
     END IF;
 END $$;
 
--- 2. ユーザーテーブルの最終更新
-ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status_final verification_status_final DEFAULT 'new_user';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_terms_agreed BOOLEAN DEFAULT FALSE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_terms_agreed_at TIMESTAMP WITH TIME ZONE;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_name VARCHAR(255);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_contact_info TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS final_approval_notes TEXT;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES users(id);
-ALTER TABLE users ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+-- 2. プロフィールテーブルの最終更新（usersはビューなので、profilesテーブルに追加）
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS verification_status_final verification_status_final DEFAULT 'new_user';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS agency_terms_agreed BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS agency_terms_agreed_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS agency_name VARCHAR(255);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS agency_contact_info TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS final_approval_notes TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS approved_by UUID REFERENCES public.profiles(id);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE;
+
+-- usersビューを更新して新しいカラムを含める（既存の列順序を維持）
+DROP VIEW IF EXISTS public.users;
+CREATE VIEW public.users AS
+SELECT 
+  id,
+  username,
+  full_name,
+  avatar_url,
+  bio,
+  website,
+  location,
+  email,
+  phone,
+  role,
+  status,
+  is_verified,
+  verification_badges,
+  last_login_at,
+  verification_status,
+  birth_date,
+  is_minor,
+  ekyc_provider,
+  ekyc_verification_id,
+  ekyc_verified_at,
+  legal_name,
+  verification_notes,
+  verification_status_final,
+  agency_terms_agreed,
+  agency_terms_agreed_at,
+  agency_name,
+  agency_contact_info,
+  final_approval_notes,
+  approved_by,
+  approved_at,
+  created_at,
+  updated_at
+FROM public.profiles;
 
 -- 3. 事務所利用規約同意テーブル
 CREATE TABLE IF NOT EXISTS agency_terms_agreements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     agency_name VARCHAR(255),
     agency_contact_email VARCHAR(255),
     agency_contact_phone VARCHAR(50),
@@ -55,7 +93,7 @@ CREATE TABLE IF NOT EXISTS agency_terms_agreements (
 -- 4. 統合認証進捗管理テーブル
 CREATE TABLE IF NOT EXISTS verification_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     
     -- 進捗状況
     terms_agreement_completed BOOLEAN DEFAULT FALSE,
@@ -89,8 +127,8 @@ CREATE TABLE IF NOT EXISTS verification_progress (
 -- 5. 管理者審査統合ログテーブル
 CREATE TABLE IF NOT EXISTS admin_verification_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    admin_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    admin_user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     
     -- 審査項目チェックリスト
     terms_agreement_checked BOOLEAN DEFAULT FALSE,
@@ -114,8 +152,8 @@ CREATE TABLE IF NOT EXISTS admin_verification_reviews (
 );
 
 -- 6. インデックス作成
-CREATE INDEX IF NOT EXISTS idx_users_verification_status_final ON users(verification_status_final);
-CREATE INDEX IF NOT EXISTS idx_users_agency_terms_agreed ON users(agency_terms_agreed);
+CREATE INDEX IF NOT EXISTS idx_profiles_verification_status_final ON public.profiles(verification_status_final);
+CREATE INDEX IF NOT EXISTS idx_profiles_agency_terms_agreed ON public.profiles(agency_terms_agreed);
 CREATE INDEX IF NOT EXISTS idx_agency_terms_agreements_user_id ON agency_terms_agreements(user_id);
 CREATE INDEX IF NOT EXISTS idx_verification_progress_user_id ON verification_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_verification_progress_all_requirements_met ON verification_progress(all_requirements_met);
@@ -133,9 +171,9 @@ CREATE POLICY "ユーザーは自分の事務所規約同意を管理可能" ON 
 CREATE POLICY "管理者は全ての事務所規約同意を閲覧可能" ON agency_terms_agreements
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -148,9 +186,9 @@ CREATE POLICY "ユーザーは自分の認証進捗を閲覧可能" ON verificat
 CREATE POLICY "管理者は全ての認証進捗を閲覧可能" ON verification_progress
   FOR SELECT USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -160,9 +198,9 @@ ALTER TABLE admin_verification_reviews ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "管理者のみ審査レビューを管理可能" ON admin_verification_reviews
   FOR ALL USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE users.id = auth.uid() 
-      AND users.type = 'admin'
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'admin'
     )
   );
 
@@ -245,7 +283,7 @@ $$ LANGUAGE plpgsql;
 -- トリガー作成
 DROP TRIGGER IF EXISTS trigger_update_verification_progress ON users;
 CREATE TRIGGER trigger_update_verification_progress
-    BEFORE UPDATE ON users
+    BEFORE UPDATE ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_verification_progress();
 
@@ -318,7 +356,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE VIEW admin_verification_dashboard AS
 SELECT 
     u.id as user_id,
-    u.name,
+    u.full_name as name,
     u.email,
     u.legal_name,
     u.birth_date,
@@ -356,7 +394,7 @@ SELECT
     avr.review_notes as last_review_notes,
     avr.review_completed_at as last_review_date
     
-FROM users u
+FROM public.profiles u
 LEFT JOIN agency_terms_agreements ata ON u.id = ata.user_id
 LEFT JOIN verification_progress vp ON u.id = vp.user_id
 LEFT JOIN parental_consents pc ON u.id = pc.user_id
@@ -366,7 +404,7 @@ LEFT JOIN LATERAL (
     ORDER BY created_at DESC 
     LIMIT 1
 ) avr ON TRUE
-WHERE u.type = 'star' OR u.verification_status_final IS NOT NULL;
+WHERE u.role = 'star' OR u.verification_status_final IS NOT NULL;
 
 -- コメント追加
 COMMENT ON TABLE agency_terms_agreements IS '事務所利用規約同意記録';

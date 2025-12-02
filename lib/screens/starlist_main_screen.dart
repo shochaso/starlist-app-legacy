@@ -16,6 +16,7 @@ import '../src/features/points/screens/star_points_purchase_screen.dart';
 import 'login_status_screen.dart';
 import 'test_account_switcher_screen.dart';
 import 'star_data_view_page.dart';
+import 'package:starlist_app/src/features/star_data/presentation/star_data_view_page_simple.dart';
 
 // プロバイダー・サービス
 import '../providers/user_provider.dart';
@@ -498,7 +499,8 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
       appBar: _buildAppBar(),
       drawer: _buildDrawer(),
       body: _buildBody(selectedTab),
-      bottomNavigationBar: _buildBottomNavigationBar(selectedTab),
+      bottomNavigationBar:
+          currentUser.isStar ? _buildBottomNavigationBar(selectedTab) : null,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).push(
@@ -517,7 +519,7 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
   PreferredSizeWidget _buildAppBar() {
     final selectedTab = ref.watch(selectedTabProvider);
     final themeState = ref.watch(themeProviderEnhanced);
-    final titles = ['ホーム', '検索', 'データ取込み', 'マイリスト', 'マイページ'];
+    final titles = ['ホーム', 'マイリスト', 'データ取込み', 'マイデータ', 'マイページ'];
     final isDark = themeState.isDarkMode;
 
     String title = titles[selectedTab];
@@ -650,8 +652,8 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
                 _buildDrawerItem(Icons.home, 'ホーム', 0, null),
-                _buildDrawerItem(Icons.search, '検索', 1, null),
-                _buildDrawerItem(Icons.star, 'マイリスト', 3, null),
+                _buildDrawerItem(Icons.search, '検索', -1, 'search'),
+                _buildDrawerItem(Icons.star, 'マイリスト', 1, null),
                 if (currentUser.isStar) ...[
                   _buildDrawerItem(Icons.camera_alt, 'データ取込み', 2, null),
                   _buildDrawerItem(Icons.analytics, 'ダッシュボード', -1, 'dashboard'),
@@ -661,12 +663,6 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
                   _buildDrawerItem(Icons.credit_card, '課金プラン', -1, 'subscription'),
                   _buildDrawerItem(Icons.stars, 'スターポイント購入', -1, 'buy_points'),
                 ],
-                _buildDrawerItem(
-                  Icons.grid_view_rounded,
-                  currentUser.isStar ? 'マイデータ' : 'データページ',
-                  -1,
-                  'starlist',
-                ),
                 _buildDrawerItem(Icons.settings, '設定', -1, 'settings'),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
@@ -801,24 +797,10 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
           ),
         );
         return;
-      case 'starlist':
-        final rootNavigator = Navigator.of(context, rootNavigator: true);
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          rootNavigator
-              .push(
-            MaterialPageRoute(
-              builder: (_) => StarDataViewPage(
-                username: currentUser.name,
-              ),
-              settings: const RouteSettings(name: '/starlist'),
-            ),
-          )
-              .then((_) {
-            if (!mounted) return;
-            ref.read(selectedDrawerPageProvider.notifier).state = null;
-          });
-        });
+      case 'search':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const SearchScreen()),
+        );
         return;
       case 'settings':
         if (mounted) context.go('/settings');
@@ -829,15 +811,19 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
   }
 
   Widget _buildBody(int selectedTab) {
+    final currentUser = ref.watch(currentUserProvider);
     switch (selectedTab) {
       case 0:
         return _buildHomeView();
       case 1:
-        return const SearchScreen();
+        return const MylistScreen();
       case 2:
         return const DataImportScreen(showAppBar: false);
       case 3:
-        return const MylistScreen();
+        return StarDataViewPageSimple(
+          starId: currentUser.name,
+          username: currentUser.name,
+        );
       case 4:
         return const ProfileScreen();
       default:
@@ -2129,20 +2115,17 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
   }
 
   Widget _buildBottomNavigationBar(int selectedTab) {
-    final currentUser = ref.watch(currentUserProvider);
     final themeState = ref.watch(themeProviderEnhanced);
     final isDark = themeState.isDarkMode;
-
-    // フォローページなど特別なページが表示されている場合、どのタブも選択状態にしない
-    int currentSelectedTab = selectedTab;
+    final currentUser = ref.watch(currentUserProvider);
 
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         border: Border(
           top: BorderSide(
-              color:
-                  isDark ? const Color(0xFF333333) : const Color(0xFFE5E7EB)),
+            color: isDark ? const Color(0xFF333333) : const Color(0xFFE5E7EB),
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -2159,18 +2142,15 @@ class _StarlistMainScreenState extends ConsumerState<StarlistMainScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              _buildBottomNavItem(Icons.home, 'ホーム', 0, selectedTab, isDark),
               _buildBottomNavItem(
-                  Icons.home, 'ホーム', 0, currentSelectedTab, isDark),
+                  Icons.star, 'マイリスト', 1, selectedTab, isDark),
               _buildBottomNavItem(
-                  Icons.search, '検索', 1, currentSelectedTab, isDark),
-              // スターのみ取込みタブを表示
-              if (currentUser.isStar)
-                _buildBottomNavItem(
-                    Icons.camera_alt, '取込', 2, currentSelectedTab, isDark),
+                  Icons.camera_alt, 'データ取込み', 2, selectedTab, isDark),
               _buildBottomNavItem(
-                  Icons.star, 'マイリスト', 3, currentSelectedTab, isDark),
+                  Icons.analytics, 'マイデータ', 3, selectedTab, isDark),
               _buildBottomNavItem(
-                  Icons.person, 'マイページ', 4, currentSelectedTab, isDark),
+                  Icons.person, 'マイページ', 4, selectedTab, isDark),
             ],
           ),
         ),

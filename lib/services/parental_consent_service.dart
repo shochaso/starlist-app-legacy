@@ -34,7 +34,7 @@ class ParentalConsentService {
       }).select().single();
 
       // 3. ユーザーの認証ステータスを更新
-      await _supabase.from('users').update({
+      await _supabase.from('profiles').update({
         'verification_status': 'parental_consent_submitted',
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', request.userId);
@@ -170,7 +170,7 @@ class ParentalConsentService {
       }).eq('id', consentId);
 
       // ユーザーの認証ステータスを更新
-      await _supabase.from('users').update({
+      await _supabase.from('profiles').update({
         'verification_status': 'parental_consent_approved',
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', consent['user_id']);
@@ -213,7 +213,7 @@ class ParentalConsentService {
       }).eq('id', consentId);
 
       // ユーザーの認証ステータスを更新
-      await _supabase.from('users').update({
+      await _supabase.from('profiles').update({
         'verification_status': 'rejected',
         'verification_notes': rejectionReason,
         'updated_at': DateTime.now().toIso8601String(),

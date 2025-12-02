@@ -20,11 +20,12 @@
     "paths": {
       "@/components/*": ["./app/components/*"],
       "@/components/kpi/*": ["./app/components/kpi/*"],
-      "@/types/*": ["./types/*"]
+      "@/types/*": ["./types/*"],
+      "@/lib/*": ["./lib/*"]
     },
     "allowImportingTsExtensions": true
   },
-  "include": ["next-env.d.ts", "app/**/*", "components/**/*", "types/**/*", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "app/**/*", "components/**/*", "types/**/*", "lib/**/*", ".next/types/**/*.ts"],
   "exclude": [
     "node_modules"
   ]

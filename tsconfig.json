@@ -13,12 +13,21 @@
     "moduleResolution": "node",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["./app/components/*"],
+      "@/types/*": ["./types/*"],
+      "@/lib/*": ["./lib/*"]
+    }
   },
   "include": [
     "scripts/**/*",
     "lib/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "app/**/*",
+    "components/**/*",
+    "types/**/*"
   ],
   "exclude": [
     "node_modules",

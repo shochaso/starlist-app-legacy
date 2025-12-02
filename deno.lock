@@ -39,8 +39,29 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
-        "npm:@playwright/test@^1.56.1",
-        "npm:browser-sync@^2.29.3"
+        "npm:@google-cloud/aiplatform@^5.13.0",
+        "npm:@google-cloud/storage@^7.17.3",
+        "npm:@linear/sdk@64",
+        "npm:@supabase/supabase-js@^2.39.0",
+        "npm:@types/node@^22.5.3",
+        "npm:@types/react@19.2.4",
+        "npm:autoprefixer@^10.4.0",
+        "npm:browser-sync@^2.29.3",
+        "npm:dotenv@^17.2.3",
+        "npm:eslint-config-next@^13.5.0",
+        "npm:eslint@^8.46.0",
+        "npm:markdown-link-check@^3.14.1",
+        "npm:markdownlint-cli@0.34",
+        "npm:next@^13.5.0",
+        "npm:openai@^6.9.0",
+        "npm:postcss@^8.4.0",
+        "npm:react-dom@^18.3.0",
+        "npm:react@^18.3.0",
+        "npm:recharts@^3.5.1",
+        "npm:tailwindcss@^3.4.0",
+        "npm:ts-node@^10.9.2",
+        "npm:typescript@^5.3.3",
+        "npm:vitest@^1.1.0"
       ]
     }
   }

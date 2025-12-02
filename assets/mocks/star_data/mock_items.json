@@ -1,0 +1,193 @@
+[
+  {
+    "id": "mock-item-001",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-07T08:42:00Z",
+    "category": "youtube",
+    "genre": "video_variety",
+    "title": "深夜テンションで雑談しながらリラックス",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-1.jpg",
+    "metadata": {
+      "source": "YouTube",
+      "duration": "12:03",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/yt-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-002",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-07T12:20:00Z",
+    "category": "youtube",
+    "genre": "video_gameplay",
+    "title": "APEXシーズンでソロマスターへの道",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-2.jpg",
+    "metadata": {
+      "source": "YouTube",
+      "duration": "22:14",
+      "match": "solo queue",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/yt-2.jpg"
+    }
+  },
+  {
+    "id": "mock-item-003",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-06T18:05:00Z",
+    "category": "youtube",
+    "genre": "video_bgm",
+    "title": "作業用BGMリスト整理",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-3.jpg",
+    "metadata": {
+      "source": "YouTube",
+      "duration": "45:00",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/yt-3.jpg"
+    }
+  },
+  {
+    "id": "mock-item-004",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-06T09:12:00Z",
+    "category": "shopping",
+    "genre": "shopping_groceries",
+    "title": "朝のコンビニ買い出し",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/shop-1.jpg",
+    "metadata": {
+      "store": "ファミリーマート",
+      "receipt_total": 920,
+      "thumbnail_url": "https://cdn.starlist.jp/mock/shop-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-005",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-05T20:46:00Z",
+    "category": "shopping",
+    "genre": "shopping_gadget",
+    "title": "プロゲーマー向けゲーミングマウス",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/shop-2.jpg",
+    "metadata": {
+      "store": "Amazon",
+      "price": 15980,
+      "thumbnail_url": "https://cdn.starlist.jp/mock/shop-2.jpg"
+    }
+  },
+  {
+    "id": "mock-item-006",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-05T21:20:00Z",
+    "category": "music",
+    "genre": "music_pop",
+    "title": "最新シングル『星空の旅人』",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/music-1.jpg",
+    "metadata": {
+      "platform": "Apple Music",
+      "plays": 68,
+      "thumbnail_url": "https://cdn.starlist.jp/mock/music-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-007",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-04T07:15:00Z",
+    "category": "music",
+    "genre": "music_lofi",
+    "title": "リラックスLOFI集",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/music-2.jpg",
+    "metadata": {
+      "platform": "Spotify",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/music-2.jpg"
+    }
+  },
+  {
+    "id": "mock-item-008",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-04T05:30:00Z",
+    "category": "travel",
+    "genre": "travel_gear",
+    "title": "翌週のロケ用バッグを購入",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/travel-1.jpg",
+    "metadata": {
+      "store": "Luggage Lab",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/travel-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-009",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-03T06:50:00Z",
+    "category": "wellness",
+    "genre": "wellness_routine",
+    "title": "朝のストレッチルーティン",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/wellness-1.jpg",
+    "metadata": {
+      "duration": "11:00",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/wellness-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-010",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-02T19:10:00Z",
+    "category": "community",
+    "genre": "community_chat",
+    "title": "ファンと夜の座談会",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/community-1.jpg",
+    "metadata": {
+      "platform": "discord",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/community-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-011",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-02T13:55:00Z",
+    "category": "receipt",
+    "genre": "receipt_cafe",
+    "title": "カフェでアイスコーヒー",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/receipt-1.jpg",
+    "metadata": {
+      "store": "Blue Bean Café",
+      "total": 820,
+      "thumbnail_url": "https://cdn.starlist.jp/mock/receipt-1.jpg"
+    }
+  },
+  {
+    "id": "mock-item-012",
+    "username": "hanayama-mizuki",
+    "date": "2025-10-01T16:05:00Z",
+    "category": "shopping",
+    "genre": "sunburst",
+    "title": "限定『SUNBURST』アパレル",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/shop-3.jpg",
+    "metadata": {
+      "store": "STARLIST GEAR",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/shop-3.jpg"
+    }
+  },
+  {
+    "id": "mock-item-013",
+    "username": "kato-junichi",
+    "date": "2025-10-01T21:40:00Z",
+    "category": "music",
+    "genre": "music_pop",
+    "title": "BGMに『beat storm』",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/music-3.jpg",
+    "metadata": {
+      "platform": "Spotify",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/music-3.jpg"
+    }
+  },
+  {
+    "id": "mock-item-014",
+    "username": "kato-junichi",
+    "date": "2025-10-01T22:15:00Z",
+    "category": "youtube",
+    "genre": "video_variety",
+    "title": "生放送予告『馬鹿の集い』",
+    "thumbnailUrl": "https://cdn.starlist.jp/mock/yt-4.jpg",
+    "metadata": {
+      "source": "YouTube",
+      "duration": "15:30",
+      "thumbnail_url": "https://cdn.starlist.jp/mock/yt-4.jpg"
+    }
+  }
+]

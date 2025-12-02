@@ -120,8 +120,8 @@ class ContentRepository {
           .insert(newContent);
       
       final userData = await _client
-          .from('users')
-          .select('username, display_name')
+          .from('profiles')
+          .select('username, full_name')
           .eq('id', content.authorId)
           .single();
       
@@ -132,7 +132,7 @@ class ContentRepository {
         type: content.type,
         url: content.url,
         authorId: content.authorId,
-        authorName: userData['display_name'] as String? ?? userData['username'] as String,
+        authorName: userData['full_name'] as String? ?? userData['username'] as String,
         createdAt: now,
         updatedAt: now,
         metadata: content.metadata,

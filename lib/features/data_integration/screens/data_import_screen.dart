@@ -3606,6 +3606,7 @@ class _InteractiveServiceCardState extends State<_InteractiveServiceCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _glowAnimation;
+  late Widget _iconWidget;
 
   @override
   void initState() {
@@ -3620,6 +3621,7 @@ class _InteractiveServiceCardState extends State<_InteractiveServiceCard>
     _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+    _iconWidget = _createIconWidget();
   }
 
   @override
@@ -3628,7 +3630,26 @@ class _InteractiveServiceCardState extends State<_InteractiveServiceCard>
     super.dispose();
   }
 
-  Widget _buildIcon() {
+  @override
+  void didUpdateWidget(covariant _InteractiveServiceCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_shouldRebuildIcon(oldWidget)) {
+      _iconWidget = _createIconWidget();
+    }
+  }
+
+  bool _shouldRebuildIcon(_InteractiveServiceCard oldWidget) {
+    return widget.serviceId != oldWidget.serviceId ||
+        widget.iconSize != oldWidget.iconSize ||
+        widget.isDark != oldWidget.isDark ||
+        widget.isManualEntry != oldWidget.isManualEntry ||
+        widget.isCustom != oldWidget.isCustom ||
+        widget.iconData != oldWidget.iconData ||
+        widget.iconColor != oldWidget.iconColor ||
+        widget.fallbackIcon != oldWidget.fallbackIcon;
+  }
+
+  Widget _createIconWidget() {
     if (kHideImportImages) {
       return buildBlankAvatar(size: widget.iconSize);
     }
@@ -3891,13 +3912,13 @@ class _InteractiveServiceCardState extends State<_InteractiveServiceCard>
     if (widget.isPriority) {
       return SizedBox(
         height: widget.iconBoxSize,
-        child: _buildIcon(),
+        child: _iconWidget,
       );
     }
 
     return _squareIcon(
       size: widget.iconBoxSize,
-      child: _buildIcon(),
+      child: _iconWidget,
     );
   }
 

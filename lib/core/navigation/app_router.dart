@@ -23,6 +23,9 @@ import 'package:starlist_app/screens/fan_register_screen.dart';
 import 'package:starlist_app/screens/star_teaser_screen.dart';
 import 'package:starlist_app/screens/landing_screen.dart';
 import 'package:starlist_app/features/data_integration/screens/data_import_screen.dart';
+import 'package:starlist_app/features/data_integration/screens/youtube_watch_detail_page.dart';
+import 'package:starlist_app/features/data_integration/navigation/youtube_navigation.dart';
+import 'package:starlist_app/features/data_integration/models/youtube_watch_detail_entry.dart';
 
 // ignore: unused_element
 class _AuthStreamListenable extends ChangeNotifier {
@@ -130,6 +133,14 @@ GoRouter createAppRouter() {
         builder: (context, state) => const StarDataViewPage(
           username: 'demo-star',
         ),
+      ),
+      GoRoute(
+        path: '/youtube-watch-detail',
+        name: youtubeWatchDetailRouteName,
+        builder: (context, state) {
+          final args = state.extra as YoutubeWatchDetailArgs?;
+          return YoutubeWatchDetailPage(args: args);
+        },
       ),
       // GoRoute(
       //   path: '/style-guide',

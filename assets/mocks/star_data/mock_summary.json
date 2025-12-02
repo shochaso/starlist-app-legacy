@@ -1,0 +1,14 @@
+{
+  "daily_count": 3,
+  "weekly_count": 10,
+  "monthly_count": 25,
+  "latest_categories": [
+    "youtube",
+    "shopping",
+    "music",
+    "travel",
+    "community",
+    "wellness",
+    "receipt"
+  ]
+}

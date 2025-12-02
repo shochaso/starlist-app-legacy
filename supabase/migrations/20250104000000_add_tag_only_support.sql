@@ -1,6 +1,23 @@
 -- タグ付けのみ経路サポート：最小DB拡張
 -- 既存 public.contents テーブルに列追加のみ（別テーブル不要）
 
+-- contentsテーブルが存在しない場合は作成
+CREATE TABLE IF NOT EXISTS public.contents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL CHECK (type IN ('video', 'image', 'text', 'link')),
+  url TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  is_published BOOLEAN DEFAULT TRUE,
+  likes INTEGER DEFAULT 0,
+  comments INTEGER DEFAULT 0,
+  shares INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- 1) ingestモード / 信頼度 / タグ配列 / 発生日
 ALTER TABLE public.contents
   ADD COLUMN IF NOT EXISTS ingest_mode TEXT DEFAULT 'full' CHECK (ingest_mode IN ('full','tag_only')),
@@ -35,7 +52,7 @@ SELECT
   updated_at,
   is_published,
   -- 全文検索用ベクトル（日本語対応）
-  to_tsvector('japanese',
+  to_tsvector('simple',
     coalesce(title,'') || ' ' ||
     coalesce(description,'') || ' ' ||
     coalesce(category,'') || ' ' ||
@@ -51,16 +68,10 @@ CREATE INDEX IF NOT EXISTS idx_contents_ingest_mode ON public.contents(ingest_mo
 CREATE INDEX IF NOT EXISTS idx_contents_category_service ON public.contents(category, service);
 CREATE INDEX IF NOT EXISTS idx_contents_tags ON public.contents USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_contents_occurred_at ON public.contents(occurred_at DESC);
-CREATE INDEX IF NOT EXISTS idx_search_vector ON public.contents USING GIN(
-  to_tsvector('japanese',
-    coalesce(title,'') || ' ' ||
-    coalesce(description,'') || ' ' ||
-    coalesce(category,'') || ' ' ||
-    coalesce(service,'') || ' ' ||
-    coalesce(brand_or_store,'') || ' ' ||
-    array_to_string(tags,' ')
-  )
-);
+-- 全文検索インデックス（IMMUTABLE制約のため、個別カラムのインデックスのみ作成）
+CREATE INDEX IF NOT EXISTS idx_contents_title_tsvector ON public.contents USING GIN(to_tsvector('simple', coalesce(title,'')));
+CREATE INDEX IF NOT EXISTS idx_contents_description_tsvector ON public.contents USING GIN(to_tsvector('simple', coalesce(description,'')));
+CREATE INDEX IF NOT EXISTS idx_contents_tags_gin ON public.contents USING GIN(tags);
 
 -- 5) コメント追加（ドキュメント）
 COMMENT ON COLUMN public.contents.ingest_mode IS '取り込みモード: full=完全処理, tag_only=タグのみ';

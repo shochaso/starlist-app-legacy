@@ -1,8 +1,9 @@
 -- Starlistアプリケーションのデータベーススキーマ
 -- ER図設計書に基づいた実装: 2025-04-02
 
--- ユーザーテーブルの更新（既存テーブルの拡張）
-ALTER TABLE IF EXISTS public.users
+-- プロフィールテーブルの更新（既存テーブルの拡張）
+-- usersはビューなので、profilesテーブルに追加
+ALTER TABLE IF EXISTS public.profiles
   ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP WITH TIME ZONE,
   ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'
     CHECK (status IN ('active', 'inactive', 'suspended'));
@@ -10,7 +11,7 @@ ALTER TABLE IF EXISTS public.users
 -- スタープロフィールテーブル
 CREATE TABLE IF NOT EXISTS public.star_profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   category TEXT NOT NULL CHECK (category IN ('entertainer', 'athlete', 'creator', 'vtuber', 'musician', 'actor', 'other')),
   description TEXT,
   paid_follower_count INTEGER DEFAULT 0,
@@ -42,7 +43,7 @@ CREATE TABLE IF NOT EXISTS public.contents (
 -- コンテンツ消費テーブル
 CREATE TABLE IF NOT EXISTS public.content_consumptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content_type TEXT NOT NULL CHECK (content_type IN ('youtube', 'spotify', 'netflix', 'book', 'product', 'other')),
   content_id TEXT,
   title TEXT NOT NULL,
@@ -76,8 +77,8 @@ CREATE TABLE IF NOT EXISTS public.subscription_plans (
 -- サブスクリプションテーブル
 CREATE TABLE IF NOT EXISTS public.subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  star_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  star_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   plan_id UUID NOT NULL REFERENCES public.subscription_plans(id) ON DELETE RESTRICT,
   status TEXT NOT NULL CHECK (status IN ('active', 'canceled', 'expired')),
   start_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -91,7 +92,7 @@ CREATE TABLE IF NOT EXISTS public.subscriptions (
 -- チケットテーブル
 CREATE TABLE IF NOT EXISTS public.tickets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('bronze', 'silver', 'gold')),
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity >= 0),
   expiry_date TIMESTAMP WITH TIME ZONE,
@@ -103,7 +104,7 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 CREATE TABLE IF NOT EXISTS public.ticket_usages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_id UUID NOT NULL REFERENCES public.tickets(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content_id UUID NOT NULL REFERENCES public.contents(id) ON DELETE CASCADE,
   used_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -114,7 +115,7 @@ DROP TABLE IF EXISTS public.comments;
 CREATE TABLE IF NOT EXISTS public.comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   content_id UUID NOT NULL REFERENCES public.contents(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
   likes INTEGER DEFAULT 0,
@@ -126,7 +127,7 @@ CREATE TABLE IF NOT EXISTS public.comments (
 -- いいねテーブル
 CREATE TABLE IF NOT EXISTS public.likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content_id UUID REFERENCES public.contents(id) ON DELETE CASCADE,
   comment_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -144,7 +145,7 @@ CREATE TABLE IF NOT EXISTS public.likes (
 -- 通知テーブル
 CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('new_content', 'new_comment', 'new_follower', 'new_like', 'system', 'other')),
   title TEXT NOT NULL,
   message TEXT NOT NULL,
@@ -156,7 +157,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- 支払いテーブル
 CREATE TABLE IF NOT EXISTS public.payments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   subscription_id UUID REFERENCES public.subscriptions(id) ON DELETE SET NULL,
   amount DECIMAL(10,2) NOT NULL,
   currency TEXT DEFAULT 'JPY',
@@ -170,7 +171,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
 -- 分析データテーブル
 CREATE TABLE IF NOT EXISTS public.analytics (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
   event_data JSONB DEFAULT '{}'::jsonb,
   device_info JSONB DEFAULT '{}'::jsonb,
@@ -354,7 +355,7 @@ CREATE POLICY "ユーザーは自分の分析データを閲覧可能" ON public
 CREATE OR REPLACE FUNCTION public.create_star_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.is_star = true AND OLD.is_star = false THEN
+  IF NEW.role = 'star' AND (OLD.role IS NULL OR OLD.role != 'star') THEN
     INSERT INTO public.star_profiles (user_id, category)
     VALUES (NEW.id, 'other')
     ON CONFLICT (user_id) DO NOTHING;
@@ -364,5 +365,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER create_star_profile
-  AFTER UPDATE OF is_star ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.create_star_profile(); 
+  AFTER UPDATE OF role ON public.profiles
+  FOR EACH ROW 
+  WHEN (NEW.role = 'star' AND (OLD.role IS NULL OR OLD.role != 'star'))
+  EXECUTE FUNCTION public.create_star_profile(); 

@@ -4,7 +4,7 @@
 -- スターポイント残高テーブル
 CREATE TABLE IF NOT EXISTS public.s_points (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   balance INTEGER NOT NULL DEFAULT 0 CHECK (balance >= 0),
   total_earned INTEGER NOT NULL DEFAULT 0 CHECK (total_earned >= 0),
   total_spent INTEGER NOT NULL DEFAULT 0 CHECK (total_spent >= 0),
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.s_points (
 -- スターポイント取引履歴テーブル
 CREATE TABLE IF NOT EXISTS public.s_point_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('earned', 'spent', 'bonus', 'refund')),
   amount INTEGER NOT NULL CHECK (amount > 0),
   source TEXT NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.s_point_transactions (
 CREATE INDEX IF NOT EXISTS idx_s_points_user_id ON public.s_points(user_id);
 CREATE INDEX IF NOT EXISTS idx_s_point_transactions_user_id ON public.s_point_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_s_point_transactions_created_at ON public.s_point_transactions(created_at);
-CREATE INDEX IF NOT EXISTS idx_s_point_transactions_type ON public.s_point_transactions(type);
+CREATE INDEX IF NOT EXISTS idx_s_point_transactions_type ON public.s_point_transactions(transaction_type);
 
 -- RLS（Row Level Security）の有効化
 ALTER TABLE public.s_points ENABLE ROW LEVEL SECURITY;
@@ -74,6 +74,5 @@ SELECT
   1000, -- 初期残高
   1000, -- 初期獲得額
   0     -- 初期使用額
-FROM public.users
-WHERE id NOT IN (SELECT user_id FROM public.s_points)
-ON CONFLICT (user_id) DO NOTHING; 
+FROM public.profiles
+WHERE NOT EXISTS (SELECT 1 FROM public.s_points WHERE s_points.user_id = profiles.id); 
