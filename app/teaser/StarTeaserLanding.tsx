@@ -548,7 +548,7 @@ export default function StarTeaserLanding() {
 
       {/* ================= Footer ================= */}
       <footer id="footer-contact" className="py-10 border-t border-white/10 bg-[#050816]">
-        <div className="w-full px-6 flex flex-col gap-6 text-sm text-white/60">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col gap-6 text-sm text-white/60">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex flex-col gap-2 items-start">
               <Image
