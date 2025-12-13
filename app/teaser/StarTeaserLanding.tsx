@@ -532,13 +532,13 @@ export default function StarTeaserLanding() {
           <div className="w-full max-w-7xl mx-auto px-4 md:px-6 flex flex-col gap-4 text-sm text-white/60">
             <div className="flex flex-col items-start text-left md:flex-row md:items-start md:justify-between gap-6 md:gap-3">
               <div className="flex flex-col items-start">
-                <div className="relative w-72 md:w-96 aspect-[2370/220] mb-2">
+                <div className="mb-2 -ml-1">
                   <Image
-                    src="/brand/starlist-logo-clear.png"
-                    alt="STARLIST ロゴ"
-                    fill
-                    sizes="(max-width: 768px) 288px, 384px"
-                    className="object-contain object-left"
+                    src="/brand/starlist-logo-wordmark-white.png"
+                    alt="STARLIST"
+                    width={220}
+                    height={55}
+                    className="object-contain"
                   />
                 </div>
                 <p className="text-xs text-white/50">あなたの日常を、ファンの体験に。</p>
