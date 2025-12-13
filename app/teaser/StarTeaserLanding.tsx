@@ -530,7 +530,7 @@ export default function StarTeaserLanding() {
         {/* ================= Footer ================= */}
         <footer id="footer-contact" className="py-10 border-t border-white/10 bg-[#050816]">
           <div className="w-full max-w-7xl mx-auto px-4 md:px-6 flex flex-col gap-4 text-sm text-white/60">
-            <div className="flex flex-col items-start text-left md:flex-row md:items-start md:justify-between gap-6 md:gap-3">
+            <div className="flex flex-col items-start text-left md:flex-row md:items-end md:justify-between gap-6 md:gap-3">
               <div className="flex flex-col items-start">
                 <div className="mb-2 -ml-1">
                   <Image
@@ -543,7 +543,7 @@ export default function StarTeaserLanding() {
                 </div>
                 <p className="text-xs text-white/50">あなたの日常を、ファンの体験に。</p>
               </div>
-              <div className="flex flex-wrap justify-start md:justify-end gap-x-6 gap-y-2 items-center md:pt-2">
+              <div className="flex flex-wrap justify-start md:justify-end gap-x-6 gap-y-2 items-center">
                 <button
                   type="button"
                   onClick={() =>
