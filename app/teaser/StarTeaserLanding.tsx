@@ -250,10 +250,9 @@ export default function StarTeaserLanding() {
       : notifyMethod === 'X'
       ? '例: @username'
       : '連絡先を入力';
-  const profitResult = useMemo(
-    () => estimateStarlistProfit({ followers, platform, genre }),
-    [followers, platform, genre],
-  );
+  const profitResult = useMemo(() => {
+    return estimateStarlistProfit({ followers, platform, genre });
+  }, [followers, platform, genre]);
 
   return (
     <div className="relative min-h-screen bg-black text-white">
@@ -272,25 +271,7 @@ export default function StarTeaserLanding() {
               />
             </div>
             <nav className="hidden md:flex items-center gap-6 text-sm text-white/70">
-              <a href="#features" className="hover:text-white">
-                特徴
-              </a>
-              <a href="#how" className="hover:text-white">
-                使い方
-              </a>
-              <a href="#records" className="hover:text-white">
-                記録例
-              </a>
-              <a href="#plans" className="hover:text-white">
-                収益
-              </a>
-              <a href="#safety" className="hover:text-white">
-                セーフティ
-              </a>
-              <a href="#simulator" className="hover:text-white">
-                利益シミュレーション
-              </a>
-              <div className="ml-4 flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-3 text-xs">
                 <a
                   href="#signup"
                   className="bg-gradient-to-r from-[#FF3B9D] to-[#FF7A3C] px-4 py-2 rounded-full text-white font-semibold shadow-lg hover:brightness-110 whitespace-nowrap"
@@ -342,296 +323,298 @@ export default function StarTeaserLanding() {
           </div>
         </section>
 
-      {/* ================= Profit Simulation ================= */}
-      <section id="simulator" className="py-16 border-t border-white/10 bg-[#050816]">
-        <div className="max-w-3xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">利益シミュレーション</h2>
-          <p className="text-sm text-white/70 mb-8 text-center">
-            あなたのフォロワー数から収益のイメージをかんたん試算できます。
-          </p>
-          <div className="rounded-2xl bg-gradient-to-br from-[#050918] via-[#050816] to-[#020617] border border-white/10 shadow-[0_18px_45px_rgba(5,9,24,0.9)] p-6 md:p-6">
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div>
-                <label className="block text-sm mb-1 text-white/80">SNS総フォロワー数</label>
-                <input
-                  type="number"
-                  value={followers}
-                  onChange={(e) => setFollowers(Number(e.target.value))}
-                  className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
-                  min={500}
-                />
-                <p className="mt-1 text-xs text-white/50">
-                  ※ スター登録は総フォロワー500人以上が対象
+        {/* ================= Profit Simulation ================= */}
+        <section id="simulator" className="py-16 border-t border-white/10 bg-[#050816]">
+          <div className="max-w-3xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">利益シミュレーション</h2>
+            <p className="text-sm text-white/70 mb-8 text-center">
+              あなたのフォロワー数から収益のイメージをかんたん試算できます。
+            </p>
+            <div className="rounded-2xl bg-gradient-to-br from-[#050918] via-[#050816] to-[#020617] border border-white/10 shadow-[0_18px_45px_rgba(5,9,24,0.9)] p-6 md:p-6">
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div>
+                  <label className="block text-sm mb-1 text-white/80">SNS総フォロワー数</label>
+                  <input
+                    type="number"
+                    value={followers}
+                    onChange={(e) => setFollowers(Number(e.target.value))}
+                    className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
+                    min={500}
+                  />
+                  <p className="mt-1 text-xs text-white/50">
+                    ※ スター登録は総フォロワー500人以上が対象
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm mb-1 text-white/80">メイン利用SNS</label>
+                  <select
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value as PlatformKey)}
+                    className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
+                  >
+                    <option>YouTube</option>
+                    <option>X（Twitter）</option>
+                    <option>Instagram</option>
+                    <option>TikTok</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm mb-1 text-white/80">ジャンル</label>
+                  <select
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value as GenreKey)}
+                    className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
+                  >
+                    <option>VTuber</option>
+                    <option>配信者</option>
+                    <option>クリエイター</option>
+                    <option>アイドル</option>
+                    <option>学生</option>
+                    <option>その他</option>
+                  </select>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-lg text-white/80 mb-2">推定月収</p>
+                <p className="text-4xl font-bold text-[#FFB300]">¥{profitResult.estimatedMonthlyProfit.toLocaleString()}</p>
+                <p className="text-xs text-white/60 mt-2">※ 表示される金額はあくまで目安です。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= Features ================= */}
+        <section id="features" className="py-16 border-t border-white/10 bg-[#050816]">
+          <div className="max-w-5xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">こんなことができる</h2>
+            <p className="text-sm text-white/70 mb-8 text-center">STARLIST の3つの特徴</p>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold mb-2 text-white">日常のデータで収益が作れる</h3>
+                <p className="text-sm text-white">
+                  ファンに見た動画・聴いた音楽・買った物など、日常の情報を届けることで収益になります。
                 </p>
               </div>
-              <div>
-                <label className="block text-sm mb-1 text-white/80">メイン利用SNS</label>
-                <select
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                  className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
-                >
-                  <option>YouTube</option>
-                  <option>X（Twitter）</option>
-                  <option>Instagram</option>
-                  <option>TikTok</option>
-                </select>
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold mb-2 text-white">AIが自動でまとめてくれる</h3>
+                <p className="text-sm text-white">
+                  スクショをアップするだけ。AIが内容を読み取り、データとして整理してくれます。
+                </p>
               </div>
-              <div>
-                <label className="block text-sm mb-1 text-white/80">ジャンル</label>
-                <select
-                  value={genre}
-                  onChange={(e) => setGenre(e.target.value)}
-                  className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
-                >
-                  <option>VTuber</option>
-                  <option>配信者</option>
-                  <option>クリエイター</option>
-                  <option>アイドル</option>
-                  <option>学生</option>
-                  <option>その他</option>
-                </select>
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold mb-2 text-white">かんたん投稿</h3>
+                <p className="text-sm text-white">
+                  レシートやスクショをアップすると、必要な情報だけをデータ化して数タップで投稿できます。
+                </p>
               </div>
             </div>
-            <div className="text-center">
-              <p className="text-lg text-white/80 mb-2">推定月収</p>
-              <p className="text-4xl font-bold text-[#FFB300]">¥{profitResult.estimatedMonthlyProfit.toLocaleString()}</p>
-              <p className="text-xs text-white/60 mt-2">※ 表示される金額はあくまで目安です。</p>
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ================= Features ================= */}
-      <section id="features" className="py-16 border-t border-white/10 bg-[#050816]">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">こんなことができる</h2>
-          <p className="text-sm text-white/70 mb-8 text-center">STARLIST の3つの特徴</p>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold mb-2 text-white">日常のデータで収益が作れる</h3>
-              <p className="text-sm text-white">
-                ファンに見た動画・聴いた音楽・買った物など、日常の情報を届けることで収益になります。
-              </p>
-            </div>
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold mb-2 text-white">AIが自動でまとめてくれる</h3>
-              <p className="text-sm text-white">
-                スクショをアップするだけ。AIが内容を読み取り、データとして整理してくれます。
-              </p>
-            </div>
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold mb-2 text-white">かんたん投稿</h3>
-              <p className="text-sm text-white">
-                レシートやスクショをアップすると、必要な情報だけをデータ化して数タップで投稿できます。
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= Records ================= */}
-      <section id="records" className="py-16 bg-[#050816] border-t border-white/10">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-2xl font-bold text-white mb-3">どんな記録を載せられる？</h2>
-          <p className="text-sm text-white/70 mb-8">
-            「見た・買った・聴いた・使った」をデータにして、ファンに共有することができます。
-          </p>
-          <div className="grid md:grid-cols-2 gap-6 text-left">
-            {[
-              {
-                title: '視聴ログ',
-                desc: '閲覧した YouTube やアニメ、恋愛番組を共有できます。',
-              },
-              {
-                title: '買い物メモ',
-                desc: 'コンビニやネット購入の記録をリストにして共有できます。',
-              },
-              {
-                title: 'プレイリスト',
-                desc: '最近よく聴く曲や歌手をまとめて紹介・共有できます。',
-              },
-              {
-                title: 'アプリ',
-                desc: 'スマホに入っているアプリを共有できます。',
-              },
-            ].map((v, i) => (
-              <div
-                key={i}
-                className={`rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-[#0B0F1A] to-[#15182A] hover:border-[#FFB300] hover:bg-[#15182A] transition ${hoverCard}`}
-              >
-                <h3 className="text-xl font-semibold text-white mb-2">{v.title}</h3>
-                <p className="text-white/90 text-sm leading-relaxed">{v.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ================= Safety ================= */}
-      <section id="safety" className="py-16 bg-[#050816] border-t border-white/10">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">セーフティ &amp; コントロール</h2>
-          <p className="text-sm text-white/70 mb-8 text-center">
-            安心して記録を公開するための仕組みを用意しています。
-          </p>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold text-white mb-2">自動モザイク</h3>
-              <p className="text-sm text-white">
-                氏名・店舗住所・QRコード・注文番号などの情報はAIが自動検出し、データとして保存しません。公開前に、非表示になっているかを投稿前にご自身でご確認ができます。
-              </p>
-            </div>
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold text-white mb-2">公開レベル</h3>
-              <p className="text-sm text-white">
-                無料公開では、YouTube の視聴履歴を公開できます。その他の記録は、有料会員だけに限定して公開することができます。
-              </p>
-            </div>
-            <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
-              <h3 className="text-lg font-semibold text-white mb-2">あとから守れる</h3>
-              <p className="text-sm text-white">
-                投稿したあとでも、モザイクの追加・非公開・削除がすぐにできます。スクショ対策の透かしや通報・ブロック機能も、今後のアップデートで順次導入予定です。
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= Signup ================= */}
-      <section id="signup" className="py-16 bg-[#050816] border-t border-white/10">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 md:p-8">
-            <p className="text-xs tracking-[0.2em] text-white/60 mb-2">先 行 登 録</p>
-            <h2 className="text-2xl font-bold text-white mb-2">リリース通知を受け取る</h2>
-            <p className="text-sm text-white/70 mb-6">
-              サービスが始まったら、登録した方法でお知らせします。
+        {/* ================= Records ================= */}
+        <section id="records" className="py-16 bg-[#050816] border-t border-white/10">
+          <div className="max-w-5xl mx-auto px-6 text-center">
+            <h2 className="text-2xl font-bold text-white mb-3">どんな記録を載せられる？</h2>
+            <p className="text-sm text-white/70 mb-8">
+              「見た・買った・聴いた・使った」をデータにして、ファンに共有することができます。
             </p>
-
-            <div className="flex flex-wrap gap-2 mb-4 text-sm">
-              {['Instagram', 'X', 'メール'].map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setNotifyMethod(m)}
-                  className={
-                    'px-4 py-2 rounded-full border text-xs md:text-sm ' +
-                    (notifyMethod === m
-                      ? 'bg-white text-black border-white'
-                      : 'border-white/30 text-white/70 hover:bg-white/10')
-                  }
+            <div className="grid md:grid-cols-2 gap-6 text-left">
+              {[
+                {
+                  title: '視聴ログ',
+                  desc: '閲覧した YouTube やアニメ、恋愛番組を共有できます。',
+                },
+                {
+                  title: '買い物メモ',
+                  desc: 'コンビニやネット購入の記録をリストにして共有できます。',
+                },
+                {
+                  title: 'プレイリスト',
+                  desc: '最近よく聴く曲や歌手をまとめて紹介・共有できます。',
+                },
+                {
+                  title: 'アプリ',
+                  desc: 'スマホに入っているアプリを共有できます。',
+                },
+              ].map((v, i) => (
+                <div
+                  key={i}
+                  className={`rounded-2xl border border-white/10 p-6 bg-gradient-to-br from-[#0B0F1A] to-[#15182A] hover:border-[#FFB300] hover:bg-[#15182A] transition ${hoverCard}`}
                 >
-                  {m}
-                </button>
+                  <h3 className="text-xl font-semibold text-white mb-2">{v.title}</h3>
+                  <p className="text-white/90 text-sm leading-relaxed">{v.desc}</p>
+                </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            <form className="space-y-4">
-              <div>
-                <label className="block text-xs text-white/60 mb-1">{contactLabel}</label>
-                <input
-                  type={notifyMethod === 'メール' ? 'email' : 'text'}
-                  placeholder={contactPlaceholder}
-                  className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#FFB300]"
-                />
+        {/* ================= Safety ================= */}
+        <section id="safety" className="py-16 bg-[#050816] border-t border-white/10">
+          <div className="max-w-5xl mx-auto px-6">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">セーフティ &amp; コントロール</h2>
+            <p className="text-sm text-white/70 mb-8 text-center">
+              安心して記録を公開するための仕組みを用意しています。
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold text-white mb-2">自動モザイク</h3>
+                <p className="text-sm text-white">
+                  氏名・店舗住所・QRコード・注文番号などの情報はAIが自動検出し、データとして保存しません。公開前に、非表示になっているかを投稿前にご自身でご確認ができます。
+                </p>
               </div>
-              <button
-                type="submit"
-                className="w-full py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-[#FF3B9D] to-[#FF7A3C] hover:brightness-110"
-              >
-                登録する
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= Footer ================= */}
-      <footer id="footer-contact" className="py-10 border-t border-white/10 bg-[#050816]">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col gap-6 text-sm text-white/60">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex flex-col gap-2 items-start">
-              <Image
-                src="/brand/starlist-logo-clear.png"
-                alt="STARLIST ロゴ"
-                width={480}
-                height={120}
-                className="h-auto w-[330px] md:w-[480px]"
-              />
-              <p className="text-xs text-white/60">あなたの日常を、ファンの体験に。</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setFooterSection((current) => (current === 'FAQ' ? null : 'FAQ'))
-                }
-                className="underline-offset-4 hover:underline text-white/70 hover:text-white"
-              >
-                FAQ
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setFooterSection((current) => (current === 'OPERATOR' ? null : 'OPERATOR'))
-                }
-                className="underline-offset-4 hover:underline text-white/70 hover:text-white"
-              >
-                運営情報
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setFooterSection((current) => (current === 'PRIVACY' ? null : 'PRIVACY'))
-                }
-                className="underline-offset-4 hover:underline text-white/70 hover:text-white"
-              >
-                プライバシーポリシー
-              </button>
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold text-white mb-2">公開レベル</h3>
+                <p className="text-sm text-white">
+                  無料公開では、YouTube の視聴履歴を公開できます。その他の記録は、有料会員だけに限定して公開することができます。
+                </p>
+              </div>
+              <div className={`rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 ${hoverCard}`}>
+                <h3 className="text-lg font-semibold text-white mb-2">あとから守れる</h3>
+                <p className="text-sm text-white">
+                  投稿したあとでも、モザイクの追加・非公開・削除がすぐにできます。スクショ対策の透かしや通報・ブロック機能も、今後のアップデートで順次導入予定です。
+                </p>
+              </div>
             </div>
           </div>
+        </section>
 
-          {footerSection && (
-            <div className="border-t border-white/10 pt-4 text-xs text-white/70 space-y-2">
-              {footerSection === 'FAQ' && (
-                <>
-                  <p className="font-semibold text-white/80">FAQ（よくある質問）</p>
-                  <p>
-                    現在クローズド準備中のため、FAQ は順次追加予定です。STARLIST の提供内容や
-                    利用開始時期については、決まりしだいこちらに掲載します。
-                  </p>
-                </>
-              )}
-              {footerSection === 'OPERATOR' && (
-                <>
-                  <p className="font-semibold text-white/80">運営情報</p>
-                  {operatorName && <p>運営者名：{operatorName}</p>}
-                  {operatorAddress && <p>所在地：{operatorAddress}</p>}
-                  {operatorEmail && <p>お問い合わせ：{operatorEmail}</p>}
-                </>
-              )}
-              {footerSection === 'PRIVACY' && (
-                <>
-                  <p className="font-semibold text-white/80">プライバシーポリシー（概要）</p>
-                  <p>
-                    STARLIST は、サービス提供・不正利用防止・統計的な分析のために、必要な範囲でデータを
-                    取得・利用します。個人が特定されない形に統計化したデータを、サービス改善や提携先との
-                    連携に活用する場合があります。
-                  </p>
-                  <p>
-                    正式なプライバシーポリシーは、サービス公開前までに整備し、本ページおよび専用ページで
-                    公開します。
-                  </p>
-                </>
-              )}
+        {/* ================= Signup ================= */}
+        <section id="signup" className="py-16 bg-[#050816] border-t border-white/10">
+          <div className="max-w-3xl mx-auto px-6">
+            <div className="rounded-2xl bg-[#0B0F1A] border border-white/10 p-6 md:p-8">
+              <p className="text-xs tracking-[0.2em] text-white/60 mb-2">先 行 登 録</p>
+              <h2 className="text-2xl font-bold text-white mb-2">リリース通知を受け取る</h2>
+              <p className="text-sm text-white/70 mb-6">
+                サービスが始まったら、登録した方法でお知らせします。
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-4 text-sm">
+                {['Instagram', 'X', 'メール'].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setNotifyMethod(m as any)}
+                    className={
+                      'px-4 py-2 rounded-full border text-xs md:text-sm ' +
+                      (notifyMethod === m
+                        ? 'bg-white text-black border-white'
+                        : 'border-white/30 text-white/70 hover:bg-white/10')
+                    }
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-xs text-white/60 mb-1">{contactLabel}</label>
+                  <input
+                    type={notifyMethod === 'メール' ? 'email' : 'text'}
+                    placeholder={contactPlaceholder}
+                    className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#FFB300]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-[#FF3B9D] to-[#FF7A3C] hover:brightness-110"
+                >
+                  登録する
+                </button>
+              </form>
             </div>
-          )}
+          </div>
+        </section>
 
-          <p className="text-xs text-white/50 pt-2 border-t border-white/5 mt-4">
-            © 2025 STARLIST. すべての商標は各社に帰属します。
-          </p>
-        </div>
-      </footer>
+        {/* ================= Footer ================= */}
+        <footer id="footer-contact" className="py-10 border-t border-white/10 bg-[#050816]">
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 flex flex-col gap-4 text-sm text-white/60">
+            <div className="flex flex-col items-center text-center md:flex-row md:items-start md:justify-between gap-6 md:gap-3">
+              <div className="flex flex-col items-center md:items-start">
+                <div className="relative w-64 md:w-80 aspect-[2370/220]">
+                  <Image
+                    src="/brand/starlist-logo-clear.png"
+                    alt="STARLIST ロゴ"
+                    fill
+                    sizes="(max-width: 768px) 256px, 320px"
+                    className="object-contain"
+                  />
+                </div>
+                <p className="mt-3 text-xs text-white/50">あなたの日常を、ファンの体験に。</p>
+              </div>
+              <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2 items-center md:pt-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFooterSection((current) => (current === 'FAQ' ? null : 'FAQ'))
+                  }
+                  className="underline-offset-4 hover:underline text-white/70 hover:text-white whitespace-nowrap"
+                >
+                  FAQ
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFooterSection((current) => (current === 'OPERATOR' ? null : 'OPERATOR'))
+                  }
+                  className="underline-offset-4 hover:underline text-white/70 hover:text-white whitespace-nowrap"
+                >
+                  運営情報
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFooterSection((current) => (current === 'PRIVACY' ? null : 'PRIVACY'))
+                  }
+                  className="underline-offset-4 hover:underline text-white/70 hover:text-white whitespace-nowrap"
+                >
+                  プライバシーポリシー
+                </button>
+              </div>
+            </div>
+
+            {footerSection && (
+              <div className="border-t border-white/10 pt-4 text-xs text-white/70 space-y-2">
+                {footerSection === 'FAQ' && (
+                  <>
+                    <p className="font-semibold text-white/80">FAQ（よくある質問）</p>
+                    <p>
+                      現在クローズド準備中のため、FAQ は順次追加予定です。STARLIST の提供内容や
+                      利用開始時期については、決まりしだいこちらに掲載します。
+                    </p>
+                  </>
+                )}
+                {footerSection === 'OPERATOR' && (
+                  <>
+                    <p className="font-semibold text-white/80">運営情報</p>
+                    {operatorName && <p>運営者名：{operatorName}</p>}
+                    {operatorAddress && <p>所在地：{operatorAddress}</p>}
+                    {operatorEmail && <p>お問い合わせ：{operatorEmail}</p>}
+                  </>
+                )}
+                {footerSection === 'PRIVACY' && (
+                  <>
+                    <p className="font-semibold text-white/80">プライバシーポリシー（概要）</p>
+                    <p>
+                      STARLIST は、サービス提供・不正利用防止・統計的な分析のために、必要な範囲でデータを
+                      取得・利用します。個人が特定されない形に統計化したデータを、サービス改善や提携先との
+                      連携に活用する場合があります。
+                    </p>
+                    <p>
+                      正式なプライバシーポリシーは、サービス公開前までに整備し、本ページおよび専用ページで
+                      公開します。
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            <p className="text-xs text-white/50 pt-4 border-t border-white/10 mt-2">
+              © 2025 STARLIST. すべての商標は各社に帰属します。
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
