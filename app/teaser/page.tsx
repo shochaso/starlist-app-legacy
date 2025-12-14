@@ -1,5 +1,5 @@
-import StarSignUpLPRedesign from "./StarSignUpLPRedesign";
+import StarTeaserLanding from "./StarTeaserLanding";
 
 export default function TeaserPage() {
-  return <StarSignUpLPRedesign />;
+  return <StarTeaserLanding />;
 }
