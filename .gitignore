@@ -70,6 +70,8 @@ coverage/
 # Claud関連
 claude_desktop_config.json
 node_modules/
+.next/
+out/
 
 # Development logs (c.sh script)
 logs/
@@ -126,3 +128,5 @@ supabase/.temp/
 # Supabase CLI metadata
 supabase/.temp/
 .report/
+.vercel
+.env*.local
