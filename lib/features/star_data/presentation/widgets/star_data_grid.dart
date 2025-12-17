@@ -79,6 +79,7 @@ class StarDataGrid extends StatelessWidget {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         sliver: _buildGrid(
+          context: context,
           itemCount: skeletonCount,
           itemBuilder: (_, __) => const SkeletonCard(),
         ),
@@ -88,6 +89,7 @@ class StarDataGrid extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       sliver: _buildGrid(
+        context: context,
         itemCount: state.items.length,
         itemBuilder: (context, index) {
           final item = state.items[index];
@@ -105,20 +107,32 @@ class StarDataGrid extends StatelessWidget {
   }
 
   SliverGrid _buildGrid({
+    required BuildContext context,
     required int itemCount,
     required IndexedWidgetBuilder itemBuilder,
   }) {
+    // Determine if we're in wide screen mode (2-column layout)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 720;
+
     return SliverGrid(
       delegate: SliverChildBuilderDelegate(
         itemBuilder,
         childCount: itemCount,
       ),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 320,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.75,
-      ),
+      gridDelegate: isWideScreen
+          ? const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              mainAxisExtent: 490,
+            )
+          : const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 320,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
     );
   }
 }
