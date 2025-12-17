@@ -20,7 +20,12 @@ class StarDataGrid extends StatelessWidget {
   });
 
   // Responsive layout constants
+  // Breakpoint matches StarHeader's wide screen threshold (720px) for consistent UI
   static const double _wideScreenBreakpoint = 720;
+  // Card height calculated for 2-column layout to accommodate:
+  // - Service header (~60px)
+  // - Image area with 16/9 aspect ratio (~200-250px)
+  // - Content section with title, comment, and actions (~130-180px)
   static const double _cardHeightWideScreen = 490;
 
   final StarDataStateSnapshot state;
