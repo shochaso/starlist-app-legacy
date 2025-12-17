@@ -34,6 +34,8 @@ final _categoryFilters = [
   ),
 ];
 
+const double _gridCardHeight = 460.0;
+
 class _CategoryFilter {
   const _CategoryFilter({required this.label, required this.value});
   final String label;
@@ -171,73 +173,81 @@ class _StarDataViewPageSimpleState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            _buildHeader(context),
-            const SizedBox(height: 12),
-            _buildSearchBar(context),
-            const SizedBox(height: 12),
-            _buildCategoryTabs(context, selectedCategory),
-            const SizedBox(height: 16),
-            if (filteredPacks.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32),
-                child: Center(
-                  child: Text(
-                    '条件に合うデータがありません',
-                    style: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
-                    ),
-                  ),
-                ),
-              )
-            else ...[
-              // 画面幅に応じて 1列 / 2列 レイアウトを切り替える
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 900; // Web想定のブレークポイント
-
-                  if (!isWide) {
-                    // 従来どおり縦1列
-                    return Column(
-                      children: [
-                        ...filteredPacks.asMap().entries.map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: _buildDataCard(
-                              context,
-                              entry.value,
-                              isToday: entry.key == 0,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-
-                  // Webなど横幅が広い場合は2カラムで表示
-                  final itemWidth = (constraints.maxWidth - 16) / 2; // カード間16pxの間隔を想定
-
-                  return Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      ...filteredPacks.asMap().entries.map(
-                        (entry) => SizedBox(
-                          width: itemWidth,
-                          child: _buildDataCard(
-                            context,
-                            entry.value,
-                            isToday: entry.key == 0,
-                          ),
+                _buildHeader(context),
+                const SizedBox(height: 12),
+                _buildSearchBar(context),
+                const SizedBox(height: 12),
+                _buildCategoryTabs(context, selectedCategory),
+                const SizedBox(height: 16),
+                if (filteredPacks.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child: Text(
+                        '条件に合うデータがありません',
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                    ),
+                  )
+                else ...[
+                  // 画面幅に応じて 1列 / 2列 レイアウトを切り替える
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 900; // Web想定のブレークポイント
+
+                      if (!isWide) {
+                        // 従来どおり縦1列
+                        return Column(
+                          children: [
+                            ...filteredPacks.asMap().entries.map(
+                              (entry) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildDataCard(
+                                  context,
+                                  entry.value,
+                                  isToday: entry.key == 0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      const spacing = 16.0;
+                      final availableWidth = constraints.maxWidth;
+                      final usableWidth = (availableWidth - spacing).clamp(0.0, double.infinity);
+                      final columnWidth = usableWidth / 2;
+                      final childAspectRatio = columnWidth > 0 ? columnWidth / _gridCardHeight : 1.0;
+
+                      // 親 Grid が childAspectRatio で高さを揃えるパターンなので内部カードに依存しない
+                      return GridView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: filteredPacks.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: spacing,
+                          childAspectRatio: childAspectRatio,
+                        ),
+                        itemBuilder: (context, index) {
+                          final pack = filteredPacks[index];
+                          return _buildDataCard(
+                            context,
+                            pack,
+                            isToday: index == 0,
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ],
             ),
           ),
