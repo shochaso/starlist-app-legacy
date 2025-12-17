@@ -116,7 +116,7 @@ class StarDataGrid extends StatelessWidget {
     required IndexedWidgetBuilder itemBuilder,
   }) {
     // Determine if we're in wide screen mode (2-column layout)
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final isWideScreen = screenWidth > _wideScreenBreakpoint;
 
     return SliverGrid(
