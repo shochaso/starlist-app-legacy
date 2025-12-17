@@ -19,6 +19,10 @@ class StarDataGrid extends StatelessWidget {
     required this.skeletonCount,
   });
 
+  // Responsive layout constants
+  static const double _wideScreenBreakpoint = 720;
+  static const double _cardHeightWideScreen = 490;
+
   final StarDataStateSnapshot state;
   final StarDataTapCallback onCardTap;
   final VoidCallback onLike;
@@ -113,7 +117,7 @@ class StarDataGrid extends StatelessWidget {
   }) {
     // Determine if we're in wide screen mode (2-column layout)
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWideScreen = screenWidth > 720;
+    final isWideScreen = screenWidth > _wideScreenBreakpoint;
 
     return SliverGrid(
       delegate: SliverChildBuilderDelegate(
@@ -125,7 +129,7 @@ class StarDataGrid extends StatelessWidget {
               crossAxisCount: 2,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              mainAxisExtent: 490,
+              mainAxisExtent: _cardHeightWideScreen,
             )
           : const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 320,
