@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
+import { estimateRevenue } from './estimateProfit';
+import type { Category, Genre } from './estimateProfit';
 
 // ---- Profit Simulator v2 ----
 
@@ -135,7 +137,28 @@ const GENRE_PROFILES: Record<GenreKey, GenreProfile> = {
   },
 };
 
-const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+const PLATFORM_TO_CATEGORY = {
+  YouTube: '動画・配信',
+  'X（Twitter）': '動画・配信',
+  Instagram: '動画・配信',
+  TikTok: '動画・配信',
+} satisfies Record<PlatformKey, Category>;
+
+const GENRE_TO_LEGACY_GENRE = {
+  VTuber: 'VTuber' as Genre,
+  配信者: '実写配信者' as Genre,
+  クリエイター: 'その他' as Genre,
+  アイドル: '音楽・アーティスト' as Genre,
+  学生: 'ライフスタイル' as Genre,
+  その他: 'その他' as Genre,
+} satisfies Record<GenreKey, Genre>;
+
+// TODO: refine mapping when more categories/genres exist
+const mapPlatformToLegacyCategory = (platform: PlatformKey): Category => PLATFORM_TO_CATEGORY[platform];
+const mapGenreToLegacyGenre = (genre: GenreKey): Genre => GENRE_TO_LEGACY_GENRE[genre];
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
 
 const followerScale = (followers: number): number => {
   if (followers <= 0) return 0;
@@ -239,6 +262,11 @@ export default function StarTeaserLanding() {
   const hoverCard =
     'transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(255,179,0,0.12)] hover:border-[#FFB300]';
 
+  const handleFollowersChange = (value: string) => {
+    const parsed = Number(value);
+    setFollowers(Number.isFinite(parsed) && parsed > 0 ? parsed : 0);
+  };
+
   const contactLabel =
     notifyMethod === 'メール' ? 'メールアドレス' : notifyMethod ? `${notifyMethod} ID` : '連絡先';
 
@@ -252,6 +280,12 @@ export default function StarTeaserLanding() {
       : '連絡先を入力';
   const profitResult = useMemo(() => {
     return estimateStarlistProfit({ followers, platform, genre });
+  }, [followers, platform, genre]);
+
+  const legacyRevenue = useMemo(() => {
+    const legacyCategory = mapPlatformToLegacyCategory(platform);
+    const legacyGenre = mapGenreToLegacyGenre(genre);
+    return estimateRevenue({ followers, category: legacyCategory, genre: legacyGenre });
   }, [followers, platform, genre]);
 
   console.log("[teaser] inputs", { followers, platform, genre });
@@ -340,7 +374,7 @@ export default function StarTeaserLanding() {
                   <input
                     type="number"
                     value={followers}
-                    onChange={(e) => setFollowers(Number(e.target.value))}
+                    onChange={(e) => handleFollowersChange(e.target.value)}
                     className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
                     min={500}
                   />
@@ -381,6 +415,9 @@ export default function StarTeaserLanding() {
                 <p className="text-lg text-white/80 mb-2">推定月収</p>
                 <p className="text-4xl font-bold text-[#FFB300]">¥{profitResult.estimatedMonthlyProfit.toLocaleString()}</p>
                 <p className="text-xs text-white/60 mt-2">※ 表示される金額はあくまで目安です。</p>
+                <p className="text-xs text-white/40 mt-2">
+                  旧アルゴリズム推定：¥{legacyRevenue.toLocaleString()} / 月
+                </p>
               </div>
             </div>
           </div>
