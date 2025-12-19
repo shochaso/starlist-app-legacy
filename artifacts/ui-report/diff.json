@@ -1,0 +1,38 @@
+[
+  {
+    "name": "home__wide.png",
+    "width": 1400,
+    "height": 900,
+    "diffPixels": 36205,
+    "diffRatio": 0.028734126984126983,
+    "threshold": 0.0015,
+    "isFail": true
+  },
+  {
+    "name": "home__narrow.png",
+    "width": 420,
+    "height": 900,
+    "diffPixels": 7129,
+    "diffRatio": 0.01885978835978836,
+    "threshold": 0.0015,
+    "isFail": true
+  },
+  {
+    "name": "import__narrow.png",
+    "width": 420,
+    "height": 900,
+    "diffPixels": 0,
+    "diffRatio": 0,
+    "threshold": 0.0015,
+    "isFail": false
+  },
+  {
+    "name": "import__wide.png",
+    "width": 1400,
+    "height": 900,
+    "diffPixels": 0,
+    "diffRatio": 0,
+    "threshold": 0.0015,
+    "isFail": false
+  }
+]

@@ -34,7 +34,7 @@ final _categoryFilters = [
   ),
 ];
 
-const double _gridCardHeight = 460.0;
+const double _gridCardHeight = 330.0;
 
 class _CategoryFilter {
   const _CategoryFilter({required this.label, required this.value});
@@ -524,367 +524,359 @@ class _StarDataViewPageSimpleState
     final category = pack.resolvedCategory ??
         StarDataCategory.fromString(pack.mainCategory);
 
-    // YouTubeの場合は新しいデザインを適用
     if (category == StarDataCategory.youtube) {
       return _buildYoutubeDataCard(context, pack, isToday: isToday);
     }
 
-    // 共通のカードスタイル
-    final cardDecoration = BoxDecoration(
-      color: isDark ? theme.colorScheme.surface : Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(
-        color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.2),
-        width: 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.04),
-          blurRadius: 16,
-          offset: const Offset(0, 4),
-          spreadRadius: 2,
-        ),
-      ],
-    );
-
-    // 共通ヘッダー（YouTubeカードと同じアバター＋アカウント名）
     final username = widget.username ?? widget.starId;
     final name = username.replaceAll('-', ' ').split(' ').map((part) {
       if (part.isEmpty) return part;
       return part[0].toUpperCase() + part.substring(1);
     }).join(' ');
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: cardDecoration,
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header (User Info & Category Badge)
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF60A5FA), Color(0xFF34D399)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                      Text(
-                        '@$username',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // 右上にカテゴリバッジ（YouTubeのみ公開バッジも）
-                  if (category == StarDataCategory.youtube) ...[
-                    _buildAccessBadge(true),
-                    const SizedBox(width: 8),
-                  ],
-                  _buildCategoryPill(
-                    context,
-                    pack.resolvedCategory?.label ??
-                        mapStarDataCategoryLabel(pack.mainCategory),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 2. Title
-              if (category != StarDataCategory.youtube)
-                Text(
-                  pack.mainSummaryText,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                  ),
-                ),
-
-              // 3. Summary
-              if (pack.secondarySummaryText != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  pack.secondarySummaryText!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.65),
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-
-              // 4. Thumbnail/status row
-              const SizedBox(height: 16),
-              _buildPackVisualRow(context, pack),
-
-              // 5. CTA
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _handlePackCtaTap(context, pack),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF47A7A), // Salmon pink
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  child: const Text('このデータの詳細を見る'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // 6. Footer time (カード内の一番下に表示)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _formatRelativeTime(pack.date),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
+    final borderColor = theme.colorScheme.onSurface.withOpacity(0.12);
+    final cardDecoration = BoxDecoration(
+      color: isDark ? theme.colorScheme.surface : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: borderColor, width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 18,
+          offset: const Offset(0, 6),
         ),
       ],
+    );
+
+    final titleStyle = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+      color: theme.colorScheme.onSurface,
+    );
+    final metaStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      color: theme.colorScheme.onSurface.withOpacity(0.75),
+    );
+    final timeStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.2,
+      color: theme.colorScheme.onSurface.withOpacity(0.6),
+    );
+
+    return Container(
+      decoration: cardDecoration,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCardHeader(
+            context,
+            username: username,
+            name: name,
+            categoryLabel: pack.resolvedCategory?.label ??
+                mapStarDataCategoryLabel(pack.mainCategory),
+            isPublic: false,
+          ),
+          const SizedBox(height: 16),
+          _buildCardBody(
+            context,
+            pack: pack,
+            titleStyle: titleStyle,
+            metaStyle: metaStyle,
+            timeStyle: timeStyle,
+            previewRow: _buildPackVisualRow(context, pack),
+            secondaryPill: null,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildYoutubeDataCard(BuildContext context, StarDataPack pack,
       {bool isToday = false}) {
-    final mainItem = pack.items.firstOrNull;
-    final videoCount = pack.items.length;
-    final channelName = mainItem?.extra?['channel_name'] as String? ?? 'Unknown Channel';
-    final videoTitle = mainItem?.title ?? '動画タイトルなし';
-    
-    // ユーザー情報の取得（_buildHeaderと同じロジック）
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final username = widget.username ?? widget.starId;
     final name = username.replaceAll('-', ' ').split(' ').map((part) {
       if (part.isEmpty) return part;
       return part[0].toUpperCase() + part.substring(1);
     }).join(' ');
 
+    final borderColor = theme.colorScheme.onSurface.withOpacity(0.12);
+    final cardDecoration = BoxDecoration(
+      color: isDark ? theme.colorScheme.surface : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: borderColor, width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 18,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+
+    final titleStyle = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+      color: theme.colorScheme.onSurface,
+    );
+    final metaStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      color: theme.colorScheme.onSurface.withOpacity(0.75),
+    );
+    final timeStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      height: 1.2,
+      color: theme.colorScheme.onSurface.withOpacity(0.6),
+    );
+
+    final previewRow = _buildPackVisualRow(context, pack);
+
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
+      decoration: cardDecoration,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header (User Info & Public Badge)
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF60A5FA), Color(0xFF34D399)], // Blue to Greenish like the image
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  Text(
-                    '@$username',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              // 公開バッジ
-              _buildAccessBadge(true),
-              const SizedBox(width: 8),
-              // YouTube視聴バッジ
-              _buildCategoryPill(context, 'YouTube視聴'),
-            ],
+          _buildCardHeader(
+            context,
+            username: username,
+            name: name,
+            categoryLabel: 'YouTube視聴',
+            isPublic: true,
           ),
           const SizedBox(height: 16),
+          _buildCardBody(
+            context,
+            pack: pack,
+            titleStyle: titleStyle,
+            metaStyle: metaStyle,
+            timeStyle: timeStyle,
+            previewRow: previewRow,
+            secondaryPill: null,
+          ),
+        ],
+      ),
+    );
+  }
 
-          // 2. Inner Content Card（ボタンより少し狭いmaxWidthで左寄せ）
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFFE4E6)), // Light pink border
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'YouTube視聴動画 $videoCount本',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      videoTitle,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF334155),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-
-                    // チャンネル名（1行目・左寄せ）
-                    Text(
-                      channelName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // その下の行の一番右にピンク枠「+◯本の動画を視聴」
-                    if (videoCount > 1) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFF47A7A)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.add, size: 14, color: Color(0xFFF47A7A)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${videoCount - 1}本の動画を視聴',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: Color(0xFFF47A7A),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+  Widget _buildCardHeader(
+    BuildContext context, {
+    required String username,
+    required String name,
+    required String categoryLabel,
+    required bool isPublic,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFF60A5FA), Color(0xFF34D399)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          const SizedBox(height: 16),
-
-          // 3. Tags 行は非表示にし、最小限のスペースのみ残す
-          const SizedBox.shrink(),
-          const SizedBox(height: 16),
-
-          // 4. CTA Button（横幅を少し絞ったボタン）
-          const SizedBox(height: 24),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 360),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _handlePackCtaTap(context, pack),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF47A7A), // 他カテゴリと同じサーモンピンク
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  child: const Text('このデータの詳細を見る'),
-                ),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: Color(0xFF1E293B),
               ),
             ),
-          ),
+            Text(
+              '@$username',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        _buildStatusBadge(isPublic),
+        const SizedBox(width: 8),
+        _buildCategoryPill(context, categoryLabel),
+      ],
+    );
+  }
+
+  Widget _buildCardBody(
+    BuildContext context, {
+    required StarDataPack pack,
+    required TextStyle titleStyle,
+    required TextStyle metaStyle,
+    required TextStyle timeStyle,
+    required Widget previewRow,
+    required Widget? secondaryPill,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          pack.mainSummaryText,
+          style: titleStyle,
+        ),
+        if (pack.secondarySummaryText != null) ...[
           const SizedBox(height: 8),
-          
-          // 5. Footer Time
           Text(
-            _formatRelativeTime(pack.date),
-            style: const TextStyle(
+            pack.secondarySummaryText!,
+            style: metaStyle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: 16),
+        previewRow,
+        if (secondaryPill != null) ...[
+          const SizedBox(height: 12),
+          secondaryPill,
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: ElevatedButton(
+            onPressed: () => _handlePackCtaTap(context, pack),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF47A7A),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+              ),
+              padding: EdgeInsets.zero,
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            child: const Text('このデータの詳細を見る'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _formatRelativeTime(pack.date),
+          style: timeStyle,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(bool isPublic) {
+    if (isPublic) {
+      return _buildAccessBadge(true);
+    }
+    const base = Color(0xFF111827);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: base,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock, size: 12, color: Colors.white),
+          SizedBox(width: 4),
+          Text(
+            'LOCK',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewThumbnail(String? url) {
+    if (url == null || url.isEmpty) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFFF3F4F6),
+        ),
+        child: const Icon(
+          Icons.play_circle_fill,
+          size: 28,
+          color: Color(0xFFE11D48),
+        ),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        url,
+        width: 56,
+        height: 56,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFFF3F4F6),
+          ),
+          child: const Icon(
+            Icons.play_circle_fill,
+            size: 28,
+            color: Color(0xFFE11D48),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryPill(BuildContext context, {required String label}) {
+    const accent = Color(0xFFF47A7A);
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: accent.withOpacity(0.7),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.add,
+            size: 14,
+            color: accent,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF94A3B8),
+              fontWeight: FontWeight.w600,
+              color: accent,
             ),
           ),
         ],
@@ -988,72 +980,116 @@ class _StarDataViewPageSimpleState
 
   Widget _buildPackVisualRow(BuildContext context, StarDataPack pack) {
     final theme = Theme.of(context);
-    final mainItem = pack.items.firstOrNull;
-    final thumbnail = mainItem?.extra?['thumbnail_url'] as String?;
     final category = pack.resolvedCategory ??
         StarDataCategory.fromString(pack.mainCategory);
+    const panelColor = Color(0xFFF7F8FA);
+    const panelBorder = Color(0xFFE2E5EA);
+    const placeholderColor = Color(0xFFD9DDE3);
     final bool isYoutube = category == StarDataCategory.youtube;
-    final String primaryText = _maybeTrimmed(
-          isYoutube ? mainItem?.title : pack.mainSummaryText,
-        ) ??
-        pack.mainSummaryText;
-    final String? youtubeChannelName = isYoutube
-        ? _maybeTrimmed(mainItem?.extra?['channel_name'] as String?)
-        : null;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildServiceLogo(category: category, thumbnailUrl: thumbnail),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isYoutube) ...[
-                // YouTubeの場合
+    Widget content;
+    if (isYoutube) {
+      final mainItem = pack.items.firstOrNull;
+      final thumbnail = mainItem?.extra?['thumbnail_url'] as String?;
+      final videoTitle = _maybeTrimmed(mainItem?.title) ?? '';
+      final channelName =
+          _maybeTrimmed(mainItem?.extra?['channel_name'] as String?);
+      final videoCount = pack.items.length;
+
+      content = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPreviewThumbnail(thumbnail),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  primaryText,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  videoTitle.isNotEmpty ? videoTitle : pack.mainSummaryText,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withOpacity(0.9),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (youtubeChannelName != null) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _buildMiniServiceIcon(category),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          youtubeChannelName,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                if (channelName != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    channelName,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.55),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ] else
-                // YouTube以外：従来通り
-                Text(
-                  primaryText,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                if (videoCount > 1) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _buildSecondaryPill(
+                      context,
+                      label: '${videoCount - 1}本の動画を視聴',
+                    ),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      content = Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPlaceholderBar(placeholderColor, width: 200, height: 10),
+                const SizedBox(height: 8),
+                _buildPlaceholderBar(placeholderColor, width: 180, height: 10),
+                const SizedBox(height: 8),
+                _buildPlaceholderBar(placeholderColor, width: 140, height: 10),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildPlaceholderBar(placeholderColor, width: 56, height: 10),
+              const SizedBox(height: 8),
+              _buildPlaceholderBar(placeholderColor, width: 64, height: 10),
             ],
           ),
-        ),
-      ],
+        ],
+      );
+    }
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 70),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: panelColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: panelBorder),
+      ),
+      child: content,
+    );
+  }
+
+  Widget _buildPlaceholderBar(Color color,
+      {required double width, required double height}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
     );
   }
 

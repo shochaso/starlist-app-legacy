@@ -494,3 +494,4 @@ Future<int> initDailyAttempts() async {
 **レポート作成日**: 2025-11-30  
 **次回更新推奨日**: 修正完了後
 
+

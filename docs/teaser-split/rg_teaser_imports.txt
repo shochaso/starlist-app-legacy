@@ -1,0 +1,3 @@
+app/teaser/page.tsx:1:import StarSignUpLPRedesign from "./StarSignUpLPRedesign";
+app/teaser/StarSignUpLPRedesign.tsx:5:import Image from "next/image";
+app/teaser/StarSignUpLPRedesign.tsx:6:import { Button } from "@/components/ui/button";

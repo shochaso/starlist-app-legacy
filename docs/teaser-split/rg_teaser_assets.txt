@@ -1,0 +1,4 @@
+app/teaser/StarSignUpLPRedesign.tsx:5:import Image from "next/image";
+app/teaser/StarSignUpLPRedesign.tsx:119:                    {/* Logo */}
+app/teaser/StarSignUpLPRedesign.tsx:122:                            src="/starlist-logo.png"
+app/teaser/StarSignUpLPRedesign.tsx:123:                            alt="STARLIST Logo"

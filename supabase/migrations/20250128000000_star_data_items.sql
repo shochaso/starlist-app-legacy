@@ -64,3 +64,4 @@ CREATE POLICY "Public can read star_data_items"
   USING (true);
 
 
+

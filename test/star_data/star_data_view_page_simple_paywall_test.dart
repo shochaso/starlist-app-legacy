@@ -152,3 +152,4 @@ class _ShoppingOnlyRepository implements StarDataRepository {
     required String starId,
   }) async {}
 }
+

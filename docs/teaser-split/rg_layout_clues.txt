@@ -1,0 +1,5 @@
+3:import "./globals.css";
+5:export const metadata = {
+9:  metadataBase: new URL("https://starlist.jp"),
+21:    <html lang="ja" suppressHydrationWarning>
+22:      <body className="min-h-screen bg-slate-950 text-slate-50 antialiased">{children}</body>

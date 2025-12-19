@@ -62,3 +62,4 @@ BEGIN
   RAISE NOTICE '新しいスキーマ（gacha_daily_attempts）を使用してください';
 END $$;
 
+

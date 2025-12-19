@@ -38,3 +38,4 @@ VALUES
 ('11111111-1111-1111-1111-111111111111', 'music', 'YOASOBI - 群青', '再生時間：3:45', CURRENT_DATE, '{"artist":"YOASOBI","thumbnail_url":"https://imgur.com/gunjo.jpg"}'::jsonb),
 ('22222222-2222-2222-2222-222222222222', 'music', 'Ado - うっせぇわ', '再生時間：3:20', CURRENT_DATE, '{"artist":"Ado","thumbnail_url":"https://imgur.com/ado.jpg"}'::jsonb);
 
+
