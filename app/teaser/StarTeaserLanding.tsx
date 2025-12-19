@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
@@ -253,6 +253,9 @@ export default function StarTeaserLanding() {
   const profitResult = useMemo(() => {
     return estimateStarlistProfit({ followers, platform, genre });
   }, [followers, platform, genre]);
+
+  console.log("[teaser] inputs", { followers, platform, genre });
+  console.log("[teaser] profit", profitResult);
 
   return (
     <div className="relative min-h-screen bg-black text-white">
