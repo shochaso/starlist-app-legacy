@@ -883,10 +883,32 @@ export default function StarTeaserLanding() {
                 {footerSection === 'FAQ' && (
                   <>
                     <p className="font-semibold text-white/80">FAQ（よくある質問）</p>
-                    <p>
-                      現在クローズド準備中のため、FAQ は順次追加予定です。STARLIST の提供内容や
-                      利用開始時期については、決まりしだいこちらに掲載します。
-                    </p>
+                    <div className="space-y-3 text-sm text-white/80">
+                      <div>
+                        <p className="font-semibold text-white">Q: 誰が見られますか？</p>
+                        <p>あなたの投稿は、あなたが許可した範囲のファンだけが閲覧できます。</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Q: 身バレが不安です。大丈夫？</p>
+                        <p>公開範囲の設定や、必要に応じたモザイクで配慮します。</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Q: 何を投稿するサービスですか？</p>
+                        <p>
+                          視聴した作品や、購入したものなどの「ログ」をまとめてファンに公開できます。
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Q: いつから使えますか？</p>
+                        <p>先行登録いただいた方から順にご案内します。</p>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Q: 料金はかかりますか？</p>
+                        <p>
+                          提供形態・料金は調整中です。先行登録の方に優先してお知らせします。
+                        </p>
+                      </div>
+                    </div>
                   </>
                 )}
                 {footerSection === 'OPERATOR' && (
