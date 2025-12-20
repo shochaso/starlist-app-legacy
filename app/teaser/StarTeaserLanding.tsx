@@ -27,7 +27,7 @@ type GenreKey =
   | 'asmr';
 type LegacyGenreKey = 'VTuber' | '配信者' | 'クリエイター' | 'アイドル' | '学生' | 'その他';
 
-type FocusKey = 'community' | 'growth' | 'commerce' | 'live' | 'creator';
+type FocusKey = 'focus_membership' | 'focus_tips' | 'focus_affiliate' | 'focus_balance';
 type ProfitEstimateInput = {
   followers: number;
   platform: PlatformKey;
@@ -237,11 +237,10 @@ type FocusProfile = {
 };
 
 const FOCUS_PROFILES: Record<FocusKey, FocusProfile> = {
-  community: { membershipWeight: 0.5, tipsWeight: 0.35, affiliateWeight: 0.15 },
-  growth: { membershipWeight: 0.55, tipsWeight: 0.3, affiliateWeight: 0.15 },
-  commerce: { membershipWeight: 0.4, tipsWeight: 0.25, affiliateWeight: 0.35 },
-  live: { membershipWeight: 0.45, tipsWeight: 0.4, affiliateWeight: 0.15 },
-  creator: { membershipWeight: 0.35, tipsWeight: 0.3, affiliateWeight: 0.35 },
+  focus_membership: { membershipWeight: 0.7, tipsWeight: 0.15, affiliateWeight: 0.15 },
+  focus_tips: { membershipWeight: 0.3, tipsWeight: 0.55, affiliateWeight: 0.15 },
+  focus_affiliate: { membershipWeight: 0.25, tipsWeight: 0.2, affiliateWeight: 0.55 },
+  focus_balance: { membershipWeight: 0.45, tipsWeight: 0.35, affiliateWeight: 0.2 },
 };
 
 const GENRE_LABELS: Record<GenreKey, string> = {
@@ -263,15 +262,14 @@ const GENRE_LABELS: Record<GenreKey, string> = {
   asmr: 'ASMR',
 };
 
-const FOCUS_LABELS: Record<FocusKey, string> = {
-  community: 'コミュニティ構築',
-  growth: 'アカウント成長',
-  commerce: '販売・アフィリエイト',
-  live: 'ライブ配信',
-  creator: 'クリエイター支援',
-};
-
 const PLATFORM_FEE_RATE = 0.2;
+
+const FOCUS_OPTIONS: { key: FocusKey; label: string; desc: string }[] = [
+  { key: 'focus_membership', label: '会員重視', desc: '有料会員の伸びを優先' },
+  { key: 'focus_tips', label: '投げ銭重視', desc: '投げ銭のアクティブ率重視' },
+  { key: 'focus_affiliate', label: 'アフィ重視', desc: '応援購入・アフィリエイト収益' },
+  { key: 'focus_balance', label: 'バランス', desc: '会員・投げ銭・アフィを配分' },
+];
 
 const PLATFORM_TO_CATEGORY = {
   YouTube: '動画・配信',
@@ -483,7 +481,7 @@ export default function StarTeaserLanding() {
   const [followers, setFollowers] = useState(500);
   const [platform, setPlatform] = useState<PlatformKey>('YouTube');
   const [genre, setGenre] = useState<GenreKey>('vtuber_stream');
-  const [focus] = useState<FocusKey>('community');
+  const [focus, setFocus] = useState<FocusKey>('focus_balance');
   const [notifyMethod, setNotifyMethod] = useState<'Instagram' | 'X' | 'メール' | null>(null);
   const [footerSection, setFooterSection] = useState<'FAQ' | 'OPERATOR' | 'PRIVACY' | null>(null);
 
@@ -641,6 +639,30 @@ export default function StarTeaserLanding() {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div className="md:col-span-3 mt-3">
+                  <p className="text-sm text-white/80 mb-2">フォーカス（活動の寄せ方）</p>
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+                    {FOCUS_OPTIONS.map((opt) => {
+                      const isActive = focus === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          aria-label={`フォーカス: ${opt.label}`}
+                          onClick={() => setFocus(opt.key)}
+                          className={`rounded-xl border px-3 py-2 text-left text-xs transition focus-visible:outline-none sm:text-sm ${
+                            isActive
+                              ? 'border-slate-500 bg-slate-900/80 ring-1 ring-slate-500/40 text-white'
+                              : 'border-slate-800 bg-slate-900/40 text-white/70 hover:border-slate-700 hover:bg-slate-900/60'
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">{opt.label}</span>
+                          <span className="text-[11px] text-white/50">{opt.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="text-center">
