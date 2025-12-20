@@ -8,8 +8,26 @@ import type { Category, Genre } from './estimateProfit';
 // ---- Profit Simulator v2 ----
 
 type PlatformKey = 'YouTube' | 'X（Twitter）' | 'Instagram' | 'TikTok';
-type GenreKey = 'VTuber' | '配信者' | 'クリエイター' | 'アイドル' | '学生' | 'その他';
+type GenreKey =
+  | 'vtuber_stream'
+  | 'vtuber_video'
+  | 'game_stream'
+  | 'game_video'
+  | 'chat_stream'
+  | 'entertainment'
+  | 'beauty'
+  | 'fashion'
+  | 'gadget'
+  | 'gourmet'
+  | 'fitness'
+  | 'business'
+  | 'travel'
+  | 'lifestyle'
+  | 'music'
+  | 'asmr';
+type LegacyGenreKey = 'VTuber' | '配信者' | 'クリエイター' | 'アイドル' | '学生' | 'その他';
 
+type FocusKey = 'community' | 'growth' | 'commerce' | 'live' | 'creator';
 type ProfitEstimateInput = {
   followers: number;
   platform: PlatformKey;
@@ -92,7 +110,7 @@ type GenreProfile = {
   affiliateAffinity: number;
 };
 
-const GENRE_PROFILES: Record<GenreKey, GenreProfile> = {
+const GENRE_PROFILES: Record<LegacyGenreKey, GenreProfile> = {
   VTuber: {
     loyalty: 1.12,
     conversionBoost: 1.1,
@@ -137,6 +155,124 @@ const GENRE_PROFILES: Record<GenreKey, GenreProfile> = {
   },
 };
 
+type PlatformProfileV2 = {
+  activeRate: number;
+  membershipConvBase: number;
+  arppuBase: number;
+  tipsRateBase: number;
+  tipsArppuBase: number;
+  affiliateIntentBase: number;
+  affiliateArppuBase: number;
+};
+
+const PLATFORM_PROFILES_V2: Record<PlatformKey, PlatformProfileV2> = {
+  YouTube: {
+    activeRate: 0.38,
+    membershipConvBase: 0.055,
+    arppuBase: 1100,
+    tipsRateBase: 0.25,
+    tipsArppuBase: 320,
+    affiliateIntentBase: 0.08,
+    affiliateArppuBase: 250,
+  },
+  'X（Twitter）': {
+    activeRate: 0.32,
+    membershipConvBase: 0.045,
+    arppuBase: 950,
+    tipsRateBase: 0.18,
+    tipsArppuBase: 220,
+    affiliateIntentBase: 0.06,
+    affiliateArppuBase: 200,
+  },
+  Instagram: {
+    activeRate: 0.35,
+    membershipConvBase: 0.05,
+    arppuBase: 1050,
+    tipsRateBase: 0.21,
+    tipsArppuBase: 280,
+    affiliateIntentBase: 0.07,
+    affiliateArppuBase: 220,
+  },
+  TikTok: {
+    activeRate: 0.29,
+    membershipConvBase: 0.04,
+    arppuBase: 900,
+    tipsRateBase: 0.2,
+    tipsArppuBase: 260,
+    affiliateIntentBase: 0.065,
+    affiliateArppuBase: 210,
+  },
+};
+
+type GenreProfileV2 = {
+  activeMult: number;
+  membershipMult: number;
+  tipsAffinity: number;
+  purchaseIntent: number;
+};
+
+const GENRE_PROFILES_V2: Record<GenreKey, GenreProfileV2> = {
+  vtuber_stream: { activeMult: 1.15, membershipMult: 1.1, tipsAffinity: 1.2, purchaseIntent: 1.1 },
+  vtuber_video: { activeMult: 1.08, membershipMult: 1.05, tipsAffinity: 1.15, purchaseIntent: 1.05 },
+  game_stream: { activeMult: 1.05, membershipMult: 1.0, tipsAffinity: 1.0, purchaseIntent: 0.95 },
+  game_video: { activeMult: 1.02, membershipMult: 0.98, tipsAffinity: 0.95, purchaseIntent: 0.9 },
+  chat_stream: { activeMult: 0.95, membershipMult: 0.9, tipsAffinity: 0.85, purchaseIntent: 0.9 },
+  entertainment: { activeMult: 0.98, membershipMult: 0.97, tipsAffinity: 0.92, purchaseIntent: 0.93 },
+  beauty: { activeMult: 1.1, membershipMult: 1.08, tipsAffinity: 1.05, purchaseIntent: 1.02 },
+  fashion: { activeMult: 1.07, membershipMult: 1.03, tipsAffinity: 0.98, purchaseIntent: 1.0 },
+  gadget: { activeMult: 1.04, membershipMult: 1.02, tipsAffinity: 0.9, purchaseIntent: 1.05 },
+  gourmet: { activeMult: 0.96, membershipMult: 0.95, tipsAffinity: 0.9, purchaseIntent: 1.1 },
+  fitness: { activeMult: 1.0, membershipMult: 1.0, tipsAffinity: 1.0, purchaseIntent: 0.9 },
+  business: { activeMult: 0.9, membershipMult: 0.92, tipsAffinity: 0.85, purchaseIntent: 1.2 },
+  travel: { activeMult: 0.92, membershipMult: 0.95, tipsAffinity: 0.9, purchaseIntent: 1.15 },
+  lifestyle: { activeMult: 1.03, membershipMult: 1.01, tipsAffinity: 0.98, purchaseIntent: 1.05 },
+  music: { activeMult: 1.08, membershipMult: 1.05, tipsAffinity: 1.1, purchaseIntent: 1.0 },
+  asmr: { activeMult: 0.97, membershipMult: 0.93, tipsAffinity: 0.96, purchaseIntent: 0.88 },
+};
+
+type FocusProfile = {
+  membershipWeight: number;
+  tipsWeight: number;
+  affiliateWeight: number;
+};
+
+const FOCUS_PROFILES: Record<FocusKey, FocusProfile> = {
+  community: { membershipWeight: 0.5, tipsWeight: 0.35, affiliateWeight: 0.15 },
+  growth: { membershipWeight: 0.55, tipsWeight: 0.3, affiliateWeight: 0.15 },
+  commerce: { membershipWeight: 0.4, tipsWeight: 0.25, affiliateWeight: 0.35 },
+  live: { membershipWeight: 0.45, tipsWeight: 0.4, affiliateWeight: 0.15 },
+  creator: { membershipWeight: 0.35, tipsWeight: 0.3, affiliateWeight: 0.35 },
+};
+
+const GENRE_LABELS: Record<GenreKey, string> = {
+  vtuber_stream: 'VTuber（ライブ）',
+  vtuber_video: 'VTuber（動画）',
+  game_stream: 'ゲーム（ライブ）',
+  game_video: 'ゲーム（動画）',
+  chat_stream: '雑談ライブ',
+  entertainment: 'エンタメ',
+  beauty: '美容・コスメ',
+  fashion: 'ファッション',
+  gadget: 'ガジェット',
+  gourmet: 'グルメ',
+  fitness: 'フィットネス',
+  business: 'ビジネス',
+  travel: '旅行・おでかけ',
+  lifestyle: 'ライフスタイル',
+  music: '音楽',
+  asmr: 'ASMR',
+};
+
+const FOCUS_LABELS: Record<FocusKey, string> = {
+  community: 'コミュニティ構築',
+  growth: 'アカウント成長',
+  commerce: '販売・アフィリエイト',
+  live: 'ライブ配信',
+  creator: 'クリエイター支援',
+};
+
+const PLATFORM_FEE_RATE = 0.2;
+
 const PLATFORM_TO_CATEGORY = {
   YouTube: '動画・配信',
   'X（Twitter）': '動画・配信',
@@ -144,18 +280,38 @@ const PLATFORM_TO_CATEGORY = {
   TikTok: '動画・配信',
 } satisfies Record<PlatformKey, Category>;
 
-const GENRE_TO_LEGACY_GENRE = {
+const GENRE_KEY_TO_LEGACY: Record<GenreKey, LegacyGenreKey> = {
+  vtuber_stream: 'VTuber',
+  vtuber_video: 'VTuber',
+  game_stream: '配信者',
+  game_video: '配信者',
+  chat_stream: '配信者',
+  entertainment: '配信者',
+  beauty: '配信者',
+  fashion: '配信者',
+  gadget: '配信者',
+  gourmet: '配信者',
+  fitness: '配信者',
+  business: 'その他',
+  travel: 'その他',
+  lifestyle: 'その他',
+  music: 'アイドル',
+  asmr: 'その他',
+};
+
+const LEGACY_GENRE_TO_LEGACY_GENRE: Record<LegacyGenreKey, Genre> = {
   VTuber: 'VTuber' as Genre,
   配信者: '実写配信者' as Genre,
   クリエイター: 'その他' as Genre,
   アイドル: '音楽・アーティスト' as Genre,
   学生: 'ライフスタイル' as Genre,
   その他: 'その他' as Genre,
-} satisfies Record<GenreKey, Genre>;
+};
 
 // TODO: refine mapping when more categories/genres exist
 const mapPlatformToLegacyCategory = (platform: PlatformKey): Category => PLATFORM_TO_CATEGORY[platform];
-const mapGenreToLegacyGenre = (genre: GenreKey): Genre => GENRE_TO_LEGACY_GENRE[genre];
+const mapGenreToLegacyGenre = (genre: GenreKey): Genre =>
+  LEGACY_GENRE_TO_LEGACY_GENRE[GENRE_KEY_TO_LEGACY[genre]];
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -185,7 +341,8 @@ export const estimateStarlistProfit = ({
   const safeFollowers = Number.isFinite(followers) && followers > 0 ? followers : 0;
 
   const platformProfile = PLATFORM_PROFILES[platform];
-  const genreProfile = GENRE_PROFILES[genre];
+  const legacyGenreKey = GENRE_KEY_TO_LEGACY[genre];
+  const genreProfile = GENRE_PROFILES[legacyGenreKey];
 
   const engagementRateRaw =
     SIM_CONFIG.baseEngagementRate *
@@ -248,6 +405,76 @@ export const estimateStarlistProfit = ({
   };
 };
 
+type ProfitEstimateV2Params = {
+  followers: number;
+  platform: PlatformKey;
+  genre: GenreKey;
+  focus: FocusKey;
+};
+
+type ProfitEstimateV2Result = {
+  membershipRevenue: number;
+  tipsRevenue: number;
+  affiliateRevenue: number;
+  totalRevenue: number;
+  platformFee: number;
+  netRevenue: number;
+  estimatedPaidMembers: number;
+  arppu: number;
+  penetration: number;
+};
+
+const estimateStarlistProfitV2 = ({
+  followers,
+  platform,
+  genre,
+  focus,
+}: ProfitEstimateV2Params): ProfitEstimateV2Result => {
+  const safeFollowers = Math.max(0, followers);
+  const platformProfile = PLATFORM_PROFILES_V2[platform];
+  const genreProfile = GENRE_PROFILES_V2[genre];
+  const focusProfile = FOCUS_PROFILES[focus];
+
+  const activeFans = safeFollowers * platformProfile.activeRate * genreProfile.activeMult;
+  const paidMembers =
+    activeFans *
+    platformProfile.membershipConvBase *
+    genreProfile.membershipMult *
+    focusProfile.membershipWeight;
+
+  const membershipRevenue = paidMembers * platformProfile.arppuBase;
+  const tipsRevenue =
+    activeFans *
+    platformProfile.tipsRateBase *
+    genreProfile.tipsAffinity *
+    focusProfile.tipsWeight *
+    platformProfile.tipsArppuBase;
+  const affiliateRevenue =
+    activeFans *
+    platformProfile.affiliateIntentBase *
+    genreProfile.purchaseIntent *
+    focusProfile.affiliateWeight *
+    platformProfile.affiliateArppuBase;
+
+  const totalRevenue = membershipRevenue + tipsRevenue + affiliateRevenue;
+  const platformFee = totalRevenue * PLATFORM_FEE_RATE;
+  const netRevenue = totalRevenue - platformFee;
+  const arppu = totalRevenue / Math.max(paidMembers, 1);
+  const penetration = safeFollowers > 0 ? paidMembers / safeFollowers : 0;
+
+  return {
+    membershipRevenue: Math.round(membershipRevenue),
+    tipsRevenue: Math.round(tipsRevenue),
+    affiliateRevenue: Math.round(affiliateRevenue),
+    totalRevenue: Math.round(totalRevenue),
+    platformFee: Math.round(platformFee),
+    netRevenue: Math.round(netRevenue),
+    estimatedPaidMembers: Math.round(paidMembers),
+    arppu: Math.round(arppu),
+    penetration,
+  };
+};
+
 const operatorName = process.env.NEXT_PUBLIC_OPERATOR_NAME;
 const operatorAddress = process.env.NEXT_PUBLIC_OPERATOR_ADDRESS;
 const operatorEmail = process.env.NEXT_PUBLIC_OPERATOR_EMAIL;
@@ -255,7 +482,8 @@ const operatorEmail = process.env.NEXT_PUBLIC_OPERATOR_EMAIL;
 export default function StarTeaserLanding() {
   const [followers, setFollowers] = useState(500);
   const [platform, setPlatform] = useState<PlatformKey>('YouTube');
-  const [genre, setGenre] = useState<GenreKey>('VTuber');
+  const [genre, setGenre] = useState<GenreKey>('vtuber_stream');
+  const [focus] = useState<FocusKey>('community');
   const [notifyMethod, setNotifyMethod] = useState<'Instagram' | 'X' | 'メール' | null>(null);
   const [footerSection, setFooterSection] = useState<'FAQ' | 'OPERATOR' | 'PRIVACY' | null>(null);
 
@@ -288,7 +516,12 @@ export default function StarTeaserLanding() {
     return estimateRevenue({ followers, category: legacyCategory, genre: legacyGenre });
   }, [followers, platform, genre]);
 
-  console.log("[teaser] inputs", { followers, platform, genre });
+  const v2 = useMemo(
+    () => estimateStarlistProfitV2({ followers, platform, genre, focus }),
+    [followers, platform, genre, focus]
+  );
+
+  console.log("[teaser] inputs", { followers, platform, genre, focus });
   console.log("[teaser] profit", profitResult);
 
   return (
@@ -402,12 +635,11 @@ export default function StarTeaserLanding() {
                     onChange={(e) => setGenre(e.target.value as GenreKey)}
                     className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
                   >
-                    <option>VTuber</option>
-                    <option>配信者</option>
-                    <option>クリエイター</option>
-                    <option>アイドル</option>
-                    <option>学生</option>
-                    <option>その他</option>
+                    {Object.entries(GENRE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -418,6 +650,48 @@ export default function StarTeaserLanding() {
                 <p className="text-xs text-white/40 mt-2">
                   旧アルゴリズム推定：¥{legacyRevenue.toLocaleString()} / 月
                 </p>
+                <div className="mt-6 border-t border-white/10 pt-6 space-y-3 text-white/80 text-left">
+                  <div className="flex items-center justify-between text-sm text-white/60">
+                    <span>V2推定（内訳）</span>
+                    <span className="text-xs text-white/50">membership / tips / affiliate</span>
+                  </div>
+                  <div className="grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>会員収益</span>
+                      <span className="font-semibold text-white">
+                        ¥{v2.membershipRevenue.toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>投げ銭収益</span>
+                      <span className="font-semibold text-white">
+                        ¥{v2.tipsRevenue.toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>アフィリエイト収益</span>
+                      <span className="font-semibold text-white">
+                        ¥{v2.affiliateRevenue.toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>合計（税／手数料前）</span>
+                      <span className="font-semibold text-[#FFB300]">
+                        ¥{v2.totalRevenue.toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>STARLIST手数料</span>
+                      <span>¥{v2.platformFee.toLocaleString('ja-JP')}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>控除後月収</span>
+                      <span className="font-semibold text-white">
+                        ¥{v2.netRevenue.toLocaleString('ja-JP')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
