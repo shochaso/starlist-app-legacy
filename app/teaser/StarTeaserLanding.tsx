@@ -1,9 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
-import { estimateRevenue } from './estimateProfit';
-import type { Category, Genre } from './estimateProfit';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // ---- Profit Simulator v2 ----
 
@@ -243,26 +241,16 @@ const FOCUS_PROFILES: Record<FocusKey, FocusProfile> = {
   focus_balance: { membershipWeight: 0.45, tipsWeight: 0.35, affiliateWeight: 0.2 },
 };
 
-const GENRE_LABELS: Record<GenreKey, string> = {
-  vtuber_stream: 'VTuber（ライブ）',
-  vtuber_video: 'VTuber（動画）',
-  game_stream: 'ゲーム（ライブ）',
-  game_video: 'ゲーム（動画）',
-  chat_stream: '雑談ライブ',
-  entertainment: 'エンタメ',
-  beauty: '美容・コスメ',
-  fashion: 'ファッション',
-  gadget: 'ガジェット',
-  gourmet: 'グルメ',
-  fitness: 'フィットネス',
-  business: 'ビジネス',
-  travel: '旅行・おでかけ',
-  lifestyle: 'ライフスタイル',
-  music: '音楽',
-  asmr: 'ASMR',
-};
+const GENRE_OPTIONS: { value: GenreKey; label: string }[] = [
+  { value: 'chat_stream', label: '雑談' },
+  { value: 'game_stream', label: 'ゲーム実況' },
+  { value: 'asmr', label: 'ASMR' },
+  { value: 'lifestyle', label: 'その他' },
+];
 
 const PLATFORM_FEE_RATE = 0.2;
+
+const isDevLogging = process.env.NODE_ENV !== 'production';
 
 const FOCUS_OPTIONS: { key: FocusKey; label: string; desc: string }[] = [
   { key: 'focus_membership', label: '会員重視', desc: '有料会員の伸びを優先' },
@@ -270,13 +258,6 @@ const FOCUS_OPTIONS: { key: FocusKey; label: string; desc: string }[] = [
   { key: 'focus_affiliate', label: 'アフィ重視', desc: '応援購入・アフィリエイト収益' },
   { key: 'focus_balance', label: 'バランス', desc: '会員・投げ銭・アフィを配分' },
 ];
-
-const PLATFORM_TO_CATEGORY = {
-  YouTube: '動画・配信',
-  'X（Twitter）': '動画・配信',
-  Instagram: '動画・配信',
-  TikTok: '動画・配信',
-} satisfies Record<PlatformKey, Category>;
 
 const GENRE_KEY_TO_LEGACY: Record<GenreKey, LegacyGenreKey> = {
   vtuber_stream: 'VTuber',
@@ -297,19 +278,7 @@ const GENRE_KEY_TO_LEGACY: Record<GenreKey, LegacyGenreKey> = {
   asmr: 'その他',
 };
 
-const LEGACY_GENRE_TO_LEGACY_GENRE: Record<LegacyGenreKey, Genre> = {
-  VTuber: 'VTuber' as Genre,
-  配信者: '実写配信者' as Genre,
-  クリエイター: 'その他' as Genre,
-  アイドル: '音楽・アーティスト' as Genre,
-  学生: 'ライフスタイル' as Genre,
-  その他: 'その他' as Genre,
-};
-
 // TODO: refine mapping when more categories/genres exist
-const mapPlatformToLegacyCategory = (platform: PlatformKey): Category => PLATFORM_TO_CATEGORY[platform];
-const mapGenreToLegacyGenre = (genre: GenreKey): Genre =>
-  LEGACY_GENRE_TO_LEGACY_GENRE[GENRE_KEY_TO_LEGACY[genre]];
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -478,11 +447,16 @@ const operatorAddress = process.env.NEXT_PUBLIC_OPERATOR_ADDRESS;
 const operatorEmail = process.env.NEXT_PUBLIC_OPERATOR_EMAIL;
 
 export default function StarTeaserLanding() {
-  const [followers, setFollowers] = useState(500);
+  const [followers, setFollowers] = useState(800);
   const [platform, setPlatform] = useState<PlatformKey>('YouTube');
-  const [genre, setGenre] = useState<GenreKey>('vtuber_stream');
+  const [genre, setGenre] = useState<GenreKey>('chat_stream');
   const [focus, setFocus] = useState<FocusKey>('focus_balance');
-  const [notifyMethod, setNotifyMethod] = useState<'Instagram' | 'X' | 'メール' | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const resultRef = useRef<HTMLDivElement | null>(null);
+  const [email, setEmail] = useState('');
+  const [snsLink, setSnsLink] = useState('');
+  const [formMessage, setFormMessage] = useState('');
+  const [formStatus, setFormStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [footerSection, setFooterSection] = useState<'FAQ' | 'OPERATOR' | 'PRIVACY' | null>(null);
 
   const hoverCard =
@@ -493,25 +467,8 @@ export default function StarTeaserLanding() {
     setFollowers(Number.isFinite(parsed) && parsed > 0 ? parsed : 0);
   };
 
-  const contactLabel =
-    notifyMethod === 'メール' ? 'メールアドレス' : notifyMethod ? `${notifyMethod} ID` : '連絡先';
-
-  const contactPlaceholder =
-    notifyMethod === 'メール'
-      ? '例: name@example.com'
-      : notifyMethod === 'Instagram'
-      ? '例: username'
-      : notifyMethod === 'X'
-      ? '例: @username'
-      : '連絡先を入力';
   const profitResult = useMemo(() => {
     return estimateStarlistProfit({ followers, platform, genre });
-  }, [followers, platform, genre]);
-
-  const legacyRevenue = useMemo(() => {
-    const legacyCategory = mapPlatformToLegacyCategory(platform);
-    const legacyGenre = mapGenreToLegacyGenre(genre);
-    return estimateRevenue({ followers, category: legacyCategory, genre: legacyGenre });
   }, [followers, platform, genre]);
 
   const v2 = useMemo(
@@ -519,8 +476,35 @@ export default function StarTeaserLanding() {
     [followers, platform, genre, focus]
   );
 
-  console.log("[teaser] inputs", { followers, platform, genre, focus });
-  console.log("[teaser] profit", profitResult);
+  useEffect(() => {
+    if (!isDevLogging) return;
+    console.log("[teaser][focus]", focus);
+  }, [focus]);
+
+  useEffect(() => {
+    if (!isDevLogging) return;
+    console.log("[teaser][v2]", {
+      followers,
+      platform,
+      genre,
+      focus,
+      membershipRevenue: v2.membershipRevenue,
+      tipsRevenue: v2.tipsRevenue,
+      affiliateRevenue: v2.affiliateRevenue,
+      totalRevenue: v2.totalRevenue,
+      netRevenue: v2.netRevenue,
+    });
+  }, [v2, followers, platform, genre, focus]);
+
+  useEffect(() => {
+    if (!resultRef.current) return;
+    if (typeof window === 'undefined') return;
+    const rect = resultRef.current.getBoundingClientRect();
+    const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!isVisible) {
+      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [followers, platform, genre, focus]);
 
   return (
     <div className="relative min-h-screen bg-black text-white">
@@ -574,18 +558,12 @@ export default function StarTeaserLanding() {
             <p className="mt-6 text-lg text-white/90 max-w-3xl mx-auto">
               視聴履歴・レシート・プレイリストを <strong>少ないステップ</strong> でかんたん投稿。
             </p>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <div className="mt-10 flex flex-wrap justify-center">
               <a
                 href="#signup"
                 className="bg-gradient-to-r from-[#FF3B9D] to-[#FF7A3C] px-8 py-3 rounded-full text-white font-semibold shadow-lg hover:brightness-110"
               >
                 先行登録する
-              </a>
-              <a
-                href="#how"
-                className="border border-[#FFB300] text-[#FFB300] px-8 py-3 rounded-full font-semibold hover:bg-[#FFB300]/10"
-              >
-                仕組みを見る
               </a>
             </div>
           </div>
@@ -633,87 +611,61 @@ export default function StarTeaserLanding() {
                     onChange={(e) => setGenre(e.target.value as GenreKey)}
                     className="w-full p-2 rounded bg-[#020617]/70 border border-white/15 text-white focus:outline-none focus:ring-2 focus:ring-[#FFB300]/60 focus:border-[#FFB300]"
                   >
-                    {Object.entries(GENRE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
+                    {GENRE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="md:col-span-3 mt-3">
-                  <p className="text-sm text-white/80 mb-2">フォーカス（活動の寄せ方）</p>
-                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
-                    {FOCUS_OPTIONS.map((opt) => {
-                      const isActive = focus === opt.key;
-                      return (
-                        <button
-                          key={opt.key}
-                          type="button"
-                          aria-label={`フォーカス: ${opt.label}`}
-                          onClick={() => setFocus(opt.key)}
-                          className={`rounded-xl border px-3 py-2 text-left text-xs transition focus-visible:outline-none sm:text-sm ${
-                            isActive
-                              ? 'border-slate-500 bg-slate-900/80 ring-1 ring-slate-500/40 text-white'
-                              : 'border-slate-800 bg-slate-900/40 text-white/70 hover:border-slate-700 hover:bg-slate-900/60'
-                          }`}
-                        >
-                          <span className="block text-sm font-semibold">{opt.label}</span>
-                          <span className="text-[11px] text-white/50">{opt.desc}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <button
+                    type="button"
+                    className="text-xs text-white/70 underline decoration-dotted underline-offset-4"
+                    onClick={() => setShowDetails((prev) => !prev)}
+                    aria-expanded={showDetails}
+                  >
+                    {showDetails ? '詳細設定を閉じる' : '詳細設定を表示'}
+                  </button>
+                  {showDetails && (
+                    <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-sm text-white/80 mb-2">フォーカス（活動の寄せ方）</p>
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
+                        {FOCUS_OPTIONS.map((opt) => {
+                          const isActive = focus === opt.key;
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              aria-label={`フォーカス: ${opt.label}`}
+                              onClick={() => setFocus(opt.key)}
+                              className={`rounded-xl border px-3 py-2 text-left text-xs transition focus-visible:outline-none sm:text-sm ${
+                                isActive
+                                  ? 'border-slate-500 bg-slate-900/80 ring-1 ring-slate-500/40 text-white'
+                                  : 'border-slate-800 bg-slate-900/40 text-white/70 hover:border-slate-700 hover:bg-slate-900/60'
+                              }`}
+                            >
+                              <span className="block text-sm font-semibold">{opt.label}</span>
+                              <span className="text-[11px] text-white/50">{opt.desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="text-center">
-                <p className="text-lg text-white/80 mb-2">推定月収</p>
-                <p className="text-4xl font-bold text-[#FFB300]">¥{profitResult.estimatedMonthlyProfit.toLocaleString()}</p>
-                <p className="text-xs text-white/60 mt-2">※ 表示される金額はあくまで目安です。</p>
-                <p className="text-xs text-white/40 mt-2">
-                  旧アルゴリズム推定：¥{legacyRevenue.toLocaleString()} / 月
+              <div ref={resultRef} className="text-center space-y-3">
+                <p className="text-lg text-white/80">想定月収（目安）</p>
+                <p className="text-4xl font-bold text-[#FFB300]">
+                  ¥{profitResult.estimatedMonthlyProfit.toLocaleString('ja-JP')}
                 </p>
-                <div className="mt-6 border-t border-white/10 pt-6 space-y-3 text-white/80 text-left">
-                  <div className="flex items-center justify-between text-sm text-white/60">
-                    <span>V2推定（内訳）</span>
-                    <span className="text-xs text-white/50">membership / tips / affiliate</span>
-                  </div>
-                  <div className="grid gap-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span>会員収益</span>
-                      <span className="font-semibold text-white">
-                        ¥{v2.membershipRevenue.toLocaleString('ja-JP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>投げ銭収益</span>
-                      <span className="font-semibold text-white">
-                        ¥{v2.tipsRevenue.toLocaleString('ja-JP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>アフィリエイト収益</span>
-                      <span className="font-semibold text-white">
-                        ¥{v2.affiliateRevenue.toLocaleString('ja-JP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>合計（税／手数料前）</span>
-                      <span className="font-semibold text-[#FFB300]">
-                        ¥{v2.totalRevenue.toLocaleString('ja-JP')}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>STARLIST手数料</span>
-                      <span>¥{v2.platformFee.toLocaleString('ja-JP')}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>控除後月収</span>
-                      <span className="font-semibold text-white">
-                        ¥{v2.netRevenue.toLocaleString('ja-JP')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-xs text-white/60">
+                  ※ 会員収益を中心に算出した目安です
+                </p>
+                <p className="text-xs text-white/60">
+                  ※ 投げ銭・広告・アフィリエイト等は含んでいません
+                </p>
               </div>
             </div>
           </div>
@@ -825,30 +777,37 @@ export default function StarTeaserLanding() {
                 サービスが始まったら、登録した方法でお知らせします。
               </p>
 
-              <div className="flex flex-wrap gap-2 mb-4 text-sm">
-                {['Instagram', 'X', 'メール'].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setNotifyMethod(m as any)}
-                    className={
-                      'px-4 py-2 rounded-full border text-xs md:text-sm ' +
-                      (notifyMethod === m
-                        ? 'bg-white text-black border-white'
-                        : 'border-white/30 text-white/70 hover:bg-white/10')
-                    }
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-
-              <form className="space-y-4">
+              <form
+                className="space-y-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!email) {
+                    setFormStatus('error');
+                    setFormMessage('メールアドレスは必須です。');
+                    return;
+                  }
+                  setFormStatus('success');
+                  setFormMessage('送信しました。ご案内まで少々お待ちください。');
+                }}
+              >
                 <div>
-                  <label className="block text-xs text-white/60 mb-1">{contactLabel}</label>
+                  <label className="block text-xs text-white/60 mb-1">メールアドレス（必須）</label>
                   <input
-                    type={notifyMethod === 'メール' ? 'email' : 'text'}
-                    placeholder={contactPlaceholder}
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#FFB300]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/60 mb-1">SNSリンク（任意）</label>
+                  <input
+                    type="url"
+                    value={snsLink}
+                    onChange={(event) => setSnsLink(event.target.value)}
+                    placeholder="https://"
                     className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/20 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#FFB300]"
                   />
                 </div>
@@ -856,8 +815,17 @@ export default function StarTeaserLanding() {
                   type="submit"
                   className="w-full py-3 rounded-full text-sm font-semibold bg-gradient-to-r from-[#FF3B9D] to-[#FF7A3C] hover:brightness-110"
                 >
-                  登録する
+                  先行登録する
                 </button>
+                {formStatus !== 'idle' && (
+                  <p
+                    className={`text-sm ${
+                      formStatus === 'success' ? 'text-green-300' : 'text-red-300'
+                    }`}
+                  >
+                    {formMessage}
+                  </p>
+                )}
               </form>
             </div>
           </div>
