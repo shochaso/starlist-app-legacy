@@ -14,7 +14,7 @@ export default function DataPageShell({ username, date }: DataPageShellProps) {
   return (
     <div className="flex flex-col gap-6">
       <Header />
-      <SummarySection />
+      <SummarySection username={username} />
       <Suspense fallback={<div>Loading pack …</div>}>
         <PackSection username={username} date={date} />
       </Suspense>

@@ -1,16 +1,18 @@
 import Groq from "groq-sdk";
 
 const apiKey = process.env.GROQ_API_KEY ?? "";
+const isProd = process.env.NODE_ENV === "production";
+const isProdBuild = process.env.NEXT_PHASE === "phase-production-build";
 
-if (!apiKey) {
+if (!apiKey && !(isProd || isProdBuild)) {
   console.warn("GROQ_API_KEY is not configured. Groq completions will fail.");
 }
 
 const client = apiKey ? new Groq({ apiKey }) : null;
 
-export async function runGroqCompletion(prompt: string): Promise<unknown> {
+export async function runGroqCompletion(prompt: string): Promise<unknown | null> {
   if (!client) {
-    throw new Error("GROQ_API_KEY is not configured.");
+    return null;
   }
 
   // Add timeout to prevent hanging requests

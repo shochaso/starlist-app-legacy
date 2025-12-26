@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, type ComponentPropsWithoutRef } from 'react';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type MotionProps } from 'framer-motion';
 import { Loader2, Github, Mail, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,6 +21,13 @@ const signUpSchema = loginSchema.extend({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
+type MotionComponent<Props> = (props: Props) => any;
+type MotionDivProps = ComponentPropsWithoutRef<"div"> & MotionProps;
+type MotionButtonProps = ComponentPropsWithoutRef<"button"> & MotionProps;
+
+const MotionDiv = motion.div as unknown as MotionComponent<MotionDivProps>;
+const MotionButton = motion.button as unknown as MotionComponent<MotionButtonProps>;
+
 export default function LoginPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +39,7 @@ export default function LoginPage() {
         reset,
         clearErrors,
     } = useForm<SignUpFormValues>({
-        resolver: zodResolver(isLogin ? loginSchema : signUpSchema),
+        resolver: zodResolver(isLogin ? loginSchema : signUpSchema) as unknown as Resolver<SignUpFormValues>,
     });
 
     const toggleMode = () => {
@@ -58,7 +65,7 @@ export default function LoginPage() {
             <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#227CFF]/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
 
-            <motion.div
+            <MotionDiv
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -87,7 +94,7 @@ export default function LoginPage() {
 
                         {/* Toggle */}
                         <div className="flex bg-white/5 rounded-lg p-1 mb-8 relative">
-                            <motion.div
+                            <MotionDiv
                                 className="absolute top-1 bottom-1 bg-[#227CFF] rounded-md shadow-lg"
                                 initial={false}
                                 animate={{
@@ -114,7 +121,7 @@ export default function LoginPage() {
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                             <AnimatePresence mode="popLayout">
                                 {!isLogin && (
-                                    <motion.div
+                                    <MotionDiv
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: "auto" }}
                                         exit={{ opacity: 0, height: 0 }}
@@ -132,7 +139,7 @@ export default function LoginPage() {
                                                 <p className="text-red-400 text-xs ml-1">{errors.name.message}</p>
                                             )}
                                         </div>
-                                    </motion.div>
+                                    </MotionDiv>
                                 )}
                             </AnimatePresence>
 
@@ -162,7 +169,7 @@ export default function LoginPage() {
                                 )}
                             </div>
 
-                            <motion.button
+                            <MotionButton
                                 whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(34, 124, 255, 0.4)" }}
                                 whileTap={{ scale: 0.98 }}
                                 type="submit"
@@ -177,7 +184,7 @@ export default function LoginPage() {
                                         {isLogin ? "Continue with Email" : "Create Account"}
                                     </>
                                 )}
-                            </motion.button>
+                            </MotionButton>
                         </form>
 
                         {/* Divider */}
@@ -221,7 +228,7 @@ export default function LoginPage() {
 
                     </div>
                 </div>
-            </motion.div>
+            </MotionDiv>
         </div>
     );
 }

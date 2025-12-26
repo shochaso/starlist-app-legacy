@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { buildPackId } from "../../../../lib/star-data/utils/buildPackId";
-import { createSupabaseStarDataRepository } from "../../../../lib/star-data/repository/supabaseStarDataRepository.node";
-import type { StarDataItem } from "../../../../lib/star-data/models/starDataItem";
+import { buildPackId } from "../../../../../lib/star-data/utils/buildPackId";
+import { createSupabaseStarDataRepository } from "../../../../../lib/star-data/repository/supabaseStarDataRepository.node";
+import type { StarDataItem } from "../../../../../lib/star-data/models/starDataItem";
 
 type PackSectionProps = {
   username: string;

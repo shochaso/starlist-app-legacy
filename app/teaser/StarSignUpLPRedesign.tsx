@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback, type ComponentPropsWithoutRef } from 'react';
+import { motion, AnimatePresence, type MotionProps } from 'framer-motion';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,17 +56,24 @@ const calcProfit = (followers: number, platform: Platform, genre: Genre) => {
 
 // --- Components ---
 
+type MotionComponent<Props> = (props: Props) => any;
+type MotionSectionProps = ComponentPropsWithoutRef<"section"> & MotionProps;
+type MotionDivProps = ComponentPropsWithoutRef<"div"> & MotionProps;
+
+const MotionSection = motion.section as unknown as MotionComponent<MotionSectionProps>;
+const MotionDiv = motion.div as unknown as MotionComponent<MotionDivProps>;
+
 const Section = ({ children, className = "", id = "" }: { children: React.ReactNode; className?: string; id?: string }) => (
-    <motion.section
+    <MotionSection
         id={id}
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`py-20 md:py-32 px-6 relative z-10 ${className}`}
+        className={`py-20 md:py-32 px-4 sm:px-6 relative z-10 ${className}`}
     >
         {children}
-    </motion.section>
+    </MotionSection>
 );
 
 const GlassCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
@@ -76,11 +83,21 @@ const GlassCard = ({ children, className = "" }: { children: React.ReactNode; cl
 );
 
 export default function StarSignUpLPRedesign() {
+    const isDev = process.env.NODE_ENV !== "production";
+    const logEvent = useCallback(
+        (event: string, payload: Record<string, unknown> = {}) => {
+            if (!isDev) return;
+            console.log("[teaser][event]", { event, ...payload });
+        },
+        [isDev]
+    );
+
     // State for Simulator
     const [followers, setFollowers] = useState(10000);
     const [platform, setPlatform] = useState<Platform>('instagram');
     const [genre, setGenre] = useState<Genre>('lifestyle');
     const [profit, setProfit] = useState('');
+    const focus = 'none';
 
     // State for Signup
     const [email, setEmail] = useState('');
@@ -90,9 +107,48 @@ export default function StarSignUpLPRedesign() {
     // State for Mobile Menu
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+    const hasLoggedSimulate = useRef(false);
+    const hasLoggedResultView = useRef(false);
+    const resultRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        logEvent('teaser_view');
+    }, [logEvent]);
+
     useEffect(() => {
         setProfit(calcProfit(followers, platform, genre));
     }, [followers, platform, genre]);
+
+    useEffect(() => {
+        if (!isDev) return;
+        if (!hasLoggedSimulate.current) {
+            hasLoggedSimulate.current = true;
+            return;
+        }
+        logEvent('teaser_simulate', { followers, genre, platform, focus });
+    }, [followers, genre, platform, focus, isDev, logEvent]);
+
+    useEffect(() => {
+        if (!isDev) return;
+        const target = resultRef.current;
+        if (!target) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (hasLoggedResultView.current) return;
+                const entry = entries[0];
+                if (entry?.isIntersecting) {
+                    hasLoggedResultView.current = true;
+                    logEvent('teaser_result_view');
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.3 }
+        );
+
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [isDev, logEvent]);
 
     const handleScrollTo = (id: string) => {
         setIsMenuOpen(false);
@@ -100,6 +156,10 @@ export default function StarSignUpLPRedesign() {
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
         }
+    };
+    const handleCtaClick = (position: 'hero' | 'footer') => {
+        logEvent('teaser_cta_click', { cta_position: position });
+        handleScrollTo('signup');
     };
 
     return (
@@ -161,7 +221,7 @@ export default function StarSignUpLPRedesign() {
                 {/* Mobile Menu */}
                 <AnimatePresence>
                     {isMenuOpen && (
-                        <motion.div
+                        <MotionDiv
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
@@ -180,7 +240,7 @@ export default function StarSignUpLPRedesign() {
                                     事前登録する
                                 </Button>
                             </nav>
-                        </motion.div>
+                        </MotionDiv>
                     )}
                 </AnimatePresence>
             </header>
@@ -190,7 +250,7 @@ export default function StarSignUpLPRedesign() {
 
                 {/* 1. Hero Section */}
                 <Section className="min-h-[80vh] flex flex-col items-center justify-center text-center">
-                    <motion.div
+                    <MotionDiv
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.8 }}
@@ -199,9 +259,9 @@ export default function StarSignUpLPRedesign() {
                         <span className="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm font-medium text-blue-300 backdrop-blur-sm">
                             ✨ 次世代のクリエイターエコノミー
                         </span>
-                    </motion.div>
+                    </MotionDiv>
 
-                    <h2 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
+                    <h2 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-8 leading-tight">
                         あなたの<br className="md:hidden" />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
                             “見た・聴いた・買った”
@@ -210,15 +270,15 @@ export default function StarSignUpLPRedesign() {
                         記録が価値になる
                     </h2>
 
-                    <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+                    <p className="text-lg sm:text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed break-words">
                         Starlistは、あなたの愛用アイテムや体験をリスト化し、<br className="hidden md:block" />
                         ファンと共有することで収益を生み出す新しいプラットフォームです。
                     </p>
 
                     <div className="flex flex-col md:flex-row gap-4 w-full max-w-md mx-auto">
                         <Button
-                            onClick={() => handleScrollTo('signup')}
-                            className="h-14 text-lg rounded-full bg-[#227CFF] hover:bg-[#1b6ad6] shadow-[0_0_30px_rgba(34,124,255,0.4)] transition-all hover:scale-105"
+                            onClick={() => handleCtaClick('hero')}
+                            className="h-14 w-full md:w-auto text-base sm:text-lg rounded-full bg-[#227CFF] hover:bg-[#1b6ad6] shadow-[0_0_30px_rgba(34,124,255,0.4)] transition-all hover:scale-105"
                         >
                             無料で事前登録する <ArrowRight className="ml-2 w-5 h-5" />
                         </Button>
@@ -289,12 +349,15 @@ export default function StarSignUpLPRedesign() {
                                 </div>
 
                                 {/* Result */}
-                                <div className="flex flex-col justify-center items-center text-center bg-gradient-to-br from-white/5 to-white/0 rounded-xl p-8 border border-white/5">
+                                <div
+                                    ref={resultRef}
+                                    className="flex flex-col justify-center items-center text-center bg-gradient-to-br from-white/5 to-white/0 rounded-xl p-8 border border-white/5"
+                                >
                                     <p className="text-gray-400 mb-2">月間の推定収益</p>
-                                    <div className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#227CFF] to-purple-400 mb-4">
+                                    <div className="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#227CFF] to-purple-400 mb-4 tabular-nums whitespace-nowrap">
                                         ¥{profit}
                                     </div>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 leading-relaxed break-words">
                                         ※ 独自のアルゴリズムによる試算です。<br />実際の収益を保証するものではありません。
                                     </p>
                                 </div>
@@ -360,7 +423,7 @@ export default function StarSignUpLPRedesign() {
                             <h3 className="text-3xl md:text-4xl font-bold mb-6">
                                 どんな記録を<br />載せられる？
                             </h3>
-                            <p className="text-gray-400 mb-8 leading-relaxed">
+                            <p className="text-gray-400 mb-8 leading-relaxed break-words">
                                 ガジェット、コスメ、書籍、旅行の思い出、サウナの記録...。<br />
                                 Amazonや楽天の商品はもちろん、
                                 あなただけの体験もコンテンツになります。
@@ -418,7 +481,7 @@ export default function StarSignUpLPRedesign() {
                                     ベータ期間中に登録された方は、<br />
                                     将来有料化されるプレミアム機能も永年無料でご利用いただけます。
                                 </p>
-                                <Button onClick={() => handleScrollTo('signup')} className="w-full bg-[#227CFF] hover:bg-[#1b6ad6]">
+                                <Button onClick={() => handleCtaClick('footer')} className="w-full bg-[#227CFF] hover:bg-[#1b6ad6]">
                                     今すぐ枠を確保する
                                 </Button>
                             </GlassCard>
@@ -464,6 +527,7 @@ export default function StarSignUpLPRedesign() {
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
+                                        logEvent('teaser_signup_submit', { has_sns: notifyMethod === 'line' });
                                         setIsSubmitted(true);
                                     }}
                                     className="space-y-6"
@@ -514,7 +578,7 @@ export default function StarSignUpLPRedesign() {
                                     </p>
                                 </form>
                             ) : (
-                                <motion.div
+                                <MotionDiv
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="text-center py-10"
@@ -527,7 +591,7 @@ export default function StarSignUpLPRedesign() {
                                         リリース日が決まり次第、<br />
                                         {email} 宛にお知らせいたします。
                                     </p>
-                                </motion.div>
+                                </MotionDiv>
                             )}
                         </GlassCard>
                     </div>
@@ -537,12 +601,12 @@ export default function StarSignUpLPRedesign() {
 
             {/* --- Footer --- */}
             <footer className="bg-black border-t border-white/10 py-12 px-6">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-[#227CFF] rounded-sm" />
                         <span className="font-bold text-xl tracking-tight">STARLIST</span>
                     </div>
-                    <div className="flex gap-8 text-sm text-gray-500">
+                    <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
                         <a href="#" className="hover:text-white transition-colors">運営会社</a>
                         <a href="#" className="hover:text-white transition-colors">利用規約</a>
                         <a href="#" className="hover:text-white transition-colors">プライバシーポリシー</a>
