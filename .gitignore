@@ -126,3 +126,6 @@ supabase/.temp/
 # Supabase CLI metadata
 supabase/.temp/
 .report/
+
+# Next.js build output
+.next/
