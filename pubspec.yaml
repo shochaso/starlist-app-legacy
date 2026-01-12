@@ -19,7 +19,7 @@ dependencies:
   google_fonts: ^6.2.1
   supabase_flutter: ^2.5.8
   freezed_annotation: ^3.1.0
-  flutter_svg: ^2.0.9
+  flutter_svg: ^2.2.2
   lottie: ^2.7.0
   url_launcher: ^6.3.0
   otp: ^3.1.4
