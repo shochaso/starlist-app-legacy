@@ -19,6 +19,15 @@ class StarDataGrid extends StatelessWidget {
     required this.skeletonCount,
   });
 
+  // Responsive layout constants
+  // Breakpoint matches StarHeader's wide screen threshold (720px) for consistent UI
+  static const double _wideScreenBreakpoint = 720;
+  // Card height calculated for 2-column layout to accommodate:
+  // - Service header (~60px)
+  // - Image area with 16/9 aspect ratio (~200-250px)
+  // - Content section with title, comment, and actions (~130-180px)
+  static const double _cardHeightWideScreen = 490;
+
   final StarDataStateSnapshot state;
   final StarDataTapCallback onCardTap;
   final VoidCallback onLike;
@@ -79,6 +88,7 @@ class StarDataGrid extends StatelessWidget {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         sliver: _buildGrid(
+          context: context,
           itemCount: skeletonCount,
           itemBuilder: (_, __) => const SkeletonCard(),
         ),
@@ -88,6 +98,7 @@ class StarDataGrid extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       sliver: _buildGrid(
+        context: context,
         itemCount: state.items.length,
         itemBuilder: (context, index) {
           final item = state.items[index];
@@ -105,20 +116,32 @@ class StarDataGrid extends StatelessWidget {
   }
 
   SliverGrid _buildGrid({
+    required BuildContext context,
     required int itemCount,
     required IndexedWidgetBuilder itemBuilder,
   }) {
+    // Determine if we're in wide screen mode (2-column layout)
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWideScreen = screenWidth > _wideScreenBreakpoint;
+
     return SliverGrid(
       delegate: SliverChildBuilderDelegate(
         itemBuilder,
         childCount: itemCount,
       ),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 320,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: 0.75,
-      ),
+      gridDelegate: isWideScreen
+          ? const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              mainAxisExtent: _cardHeightWideScreen,
+            )
+          : const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 320,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
     );
   }
 }
